@@ -5,9 +5,16 @@ frameworkVersion: ">=1.1.0 <=2.20.1"
 provider:
   name: aws
   runtime: python3.8
+  profile: dunce
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
     SLACK_BOT_TOKEN: ${ssm:/Config/Test/Slack/BotToken~true}
+    SPOTIFY_THREAD_PLAYLIST_ID: CHANGEME
+    SPOTIFY_CLIENT_ID: ${ssm:/Config/Prod/SpotifyClientId~true}
+    SPOTIFY_CLIENT_SECRET: ${ssm:/Config/Prod/SpotifyClientSecret~true}
+    SPOTIFY_USER_NAME: ${ssm:/Config/Prod/SpotifyLouUsername~true}
+    SPOTIFY_USER_REFRESH_TOKEN: ${ssm:/Config/Prod/SpotifyLouRefreshToken~true}
+    STAGE: ${opt:stage, self:provider.stage}
   iamRoleStatements:
     - Effect: Allow
       Action:
