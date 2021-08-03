@@ -3,18 +3,26 @@ import json
 import os
 import requests
 import spotipy
+from models import SlackUser, SlackChannel
 
 
 class SpotifyApi(object):
     def __init__(self,
+                 slack_user: SlackUser,
+                 slack_channel: SlackChannel,
+                 cipher_suite,
                  client_id=os.environ['SPOTIFY_CLIENT_ID'],
-                 client_secret=os.environ['SPOTIFY_CLIENT_SECRET'],
-                 user_name=os.environ['SPOTIFY_USER_NAME'],
-                 user_refresh_token=os.environ['SPOTIFY_USER_REFRESH_TOKEN'],
-                 default_playlist_id=os.environ['SPOTIFY_THREAD_PLAYLIST_ID']):
-        self.user_name = user_name
-        self.playlist_id = default_playlist_id
-        auth_manager = SpotifyAuthManager(client_id, client_secret, user_refresh_token)
+                 client_secret=os.environ['SPOTIFY_CLIENT_SECRET']):
+        self.cipher_suite = cipher_suite
+        self.user_name = self.cipher_suite.decrypt(
+            slack_user.spotify_user_name_encrypt.encode()
+        )
+        self.playlist_id = slack_channel.spotify_playlist_id
+        auth_manager = SpotifyAuthManager(
+            client_id,
+            client_secret,
+            self.cipher_suite.decrypt(slack_user.spotify_refresh_token_encrypt.encode())
+        )
         self.spotify = spotipy.Spotify(auth_manager=auth_manager)
 
     def add_track(self, track_id):

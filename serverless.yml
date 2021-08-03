@@ -8,8 +8,9 @@ provider:
   profile: dunce
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+    APP_KEY: ${ssm:/Config/Prod/Dunces/Key~true}
     SLACK_BOT_TOKEN: ${ssm:/Config/Test/Slack/BotToken~true}
-    SPOTIFY_THREAD_PLAYLIST_ID: CHANGEME
+    SPOTIFY_THREAD_PLAYLIST_ID: 2xFUdaxNcITI4xP52ZzYos
     SPOTIFY_CLIENT_ID: ${ssm:/Config/Prod/SpotifyClientId~true}
     SPOTIFY_CLIENT_SECRET: ${ssm:/Config/Prod/SpotifyClientSecret~true}
     SPOTIFY_USER_NAME: ${ssm:/Config/Prod/SpotifyLouUsername~true}
