@@ -3,7 +3,8 @@ import json
 import os
 import requests
 import spotipy
-from models import SlackUser, SlackChannel
+
+from service.models import SlackUser, SlackChannel
 
 
 class SpotifyApi(object):

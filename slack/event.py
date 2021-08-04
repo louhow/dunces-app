@@ -33,7 +33,7 @@ SUCCESS = {
 
 
 def get_track_id(link):
-  z = re.match(r"https://open.spotify.com/track/(\w+)", link)
+  z = re.match(r'https://open.spotify.com/track/(\w+)', link)
   return z.group(1) if z else None
 
 
@@ -59,7 +59,7 @@ def handler(event, context):
   slack_user_id = data['event']['user']
   slack_user = dao.get_slack_user(SlackUser(slack_team_id, slack_user_id))
   slack_channel = dao.get_slack_channel(SlackChannel(slack_team_id, slack_user_id))
-  spotify_api = SpotifyApi(slack_user, slack_channel)
+  spotify_api = SpotifyApi(slack_user, slack_channel, cipher_suite)
 
   client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
 

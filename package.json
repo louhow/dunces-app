@@ -6,5 +6,8 @@
   "license": "MIT",
   "dependencies": {
     "serverless-python-requirements": "^5.1.1"
+  },
+  "devDependencies": {
+    "serverless-localstack": "^0.4.33"
   }
 }

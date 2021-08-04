@@ -24,8 +24,8 @@ class SpotifyTrack:
 class SlackUser:
   slack_team_id: str
   slack_user_id: str
-  spotify_user_name_encrypt: str
-  spotify_refresh_token_encrypt: str
+  spotify_user_name_encrypt: str = None
+  spotify_refresh_token_encrypt: str = None
   PK: str = field(init=False)
   SK: str = field(init=False)
 
