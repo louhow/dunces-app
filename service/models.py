@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from enum import Enum
 import os
 import pytz
 
@@ -51,3 +52,19 @@ class SlackChannel:
   def __post_init__(self):
     self.PK = f'CHANNEL#{self.slack_team_id}#{self.slack_channel_id}'
     self.SK = f'CHANNEL#{self.slack_team_id}#{self.slack_channel_id}'
+
+
+class SlackEventType(Enum):
+  MESSAGE = 'message'
+  APP_MENTION = 'app_mention'
+
+
+class SlackRequest:
+  def __init__(self, request):
+    event = request.get('event', {})
+    self.team_id: str = event.get('team')
+    self.channel_id: str = event.get('channel')
+    self.user_id: str = event.get('user')
+    self.type: SlackEventType = SlackEventType[event.get('type', '').upper()]
+    self.is_bot_message: bool = event.get('bot_id', None) is not None
+    self.text = event.get('text', None)  # TODO remove None after removing link_shared events

@@ -4,7 +4,7 @@ import os
 import requests
 import spotipy
 
-from service.models import SlackUser, SlackChannel, SpotifyTrack
+from service.models import SlackUser, SpotifyTrack
 from service.secure import CipherSuite
 
 
@@ -15,7 +15,6 @@ class SpotifyApi(object):
                  client_id=os.environ['SPOTIFY_CLIENT_ID'],
                  client_secret=os.environ['SPOTIFY_CLIENT_SECRET']):
         self.user_name = cipher_suite.decrypt(slack_user.spotify_user_name_encrypt)
-        print(f'username {self.user_name}')  # TODO remove
         auth_manager = SpotifyAuthManager(
             client_id,
             client_secret,
