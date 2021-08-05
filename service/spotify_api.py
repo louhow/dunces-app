@@ -4,39 +4,38 @@ import os
 import requests
 import spotipy
 
-from service.models import SlackUser, SlackChannel
+from service.models import SlackUser, SlackChannel, SpotifyTrack
+from service.secure import CipherSuite
 
 
 class SpotifyApi(object):
     def __init__(self,
                  slack_user: SlackUser,
-                 slack_channel: SlackChannel,
-                 cipher_suite,
+                 cipher_suite: CipherSuite,
                  client_id=os.environ['SPOTIFY_CLIENT_ID'],
                  client_secret=os.environ['SPOTIFY_CLIENT_SECRET']):
-        self.cipher_suite = cipher_suite
-        self.user_name = self.cipher_suite.decrypt(
-            slack_user.spotify_user_name_encrypt.encode()
-        )
-        self.playlist_id = slack_channel.spotify_playlist_id
+        self.user_name = cipher_suite.decrypt(slack_user.spotify_user_name_encrypt)
+        print(f'username {self.user_name}')  # TODO remove
         auth_manager = SpotifyAuthManager(
             client_id,
             client_secret,
-            self.cipher_suite.decrypt(slack_user.spotify_refresh_token_encrypt.encode())
+            cipher_suite.decrypt(slack_user.spotify_refresh_token_encrypt)
         )
         self.spotify = spotipy.Spotify(auth_manager=auth_manager)
 
-    def add_track(self, track_id):
-        self.spotify.user_playlist_add_tracks(self.user_name, self.playlist_id, [track_id])
+    def add_track(self, playlist_id, track: SpotifyTrack):
+        self.spotify.user_playlist_add_tracks(self.user_name,
+                                              playlist_id,
+                                              [track.spotify_track_id])
 
-    def fetch_track_ids(self):
+    def fetch_track_ids(self, playlist_id):
         tracks = []
         offset = 0
         while True:
-            print(f'Fetching playlist {self.playlist_id} from offset {offset}')
+            print(f'Fetching playlist {playlist_id} from offset {offset}')
             response = self.spotify.user_playlist_tracks(
                 user=self.user_name,
-                playlist_id=self.playlist_id,
+                playlist_id=playlist_id,
                 # fields='tracks.items(track(name,id,album(name,href),artists(id,name)))')
                 fields='items(track(id))',
                 limit=100,  # Max is 100

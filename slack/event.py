@@ -1,4 +1,3 @@
-from cryptography.fernet import Fernet
 import json
 import os
 import re
@@ -6,12 +5,15 @@ from slack_sdk import WebClient
 import traceback
 import random
 
+
 from service.dao import Dao
 from service.models import SpotifyTrack, SlackUser, SlackChannel
+from service.secure import CipherSuite
 from service.spotify_api import SpotifyApi
 
 dao = Dao(os.environ['DYNAMODB_TABLE'])
-cipher_suite = Fernet(os.environ['APP_KEY'].encode())
+cipher_suite = CipherSuite(os.environ['APP_KEY'])
+client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
 
 success_messages = [
   "Track added!",
@@ -24,6 +26,11 @@ success_messages = [
   "Mmm, that's good music."
 ]
 
+failure_messages = [
+  "Looks like someone has good taste.",
+  "This track has already been added."
+]
+
 SUCCESS = {
   "statusCode": 200,
   "headers": {
@@ -34,7 +41,7 @@ SUCCESS = {
 
 def get_track_id(link):
   z = re.match(r'https://open.spotify.com/track/(\w+)', link)
-  return z.group(1) if z else None
+  return z.group(1) if z and len(z.groups()) >= 1 else None
 
 
 def handler(event, context):
@@ -55,36 +62,37 @@ def handler(event, context):
   dao.blind_write({**{"PK": "audit", "SK": "event"}, **event})
   dao.blind_write({**{"PK": "audit", "SK": "data"}, **data})
 
-  slack_team_id = data['team_id']
-  slack_user_id = data['event']['user']
-  slack_user = dao.get_slack_user(SlackUser(slack_team_id, slack_user_id))
-  slack_channel = dao.get_slack_channel(SlackChannel(slack_team_id, slack_user_id))
-  spotify_api = SpotifyApi(slack_user, slack_channel, cipher_suite)
-
-  client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
-
+  slack_channel_id = data['event']['channel']
   try:
-    track_id = ''
+    slack_team_id = data['team_id']
+    slack_user_id = data['event']['user']
+    slack_user = dao.get_slack_user(SlackUser(slack_team_id, slack_user_id))
+    slack_channel = dao.get_slack_channel(SlackChannel(slack_team_id, slack_user_id))
+    spotify_api = SpotifyApi(slack_user, cipher_suite)
+
     for link in data['event']['links']:
       track_id = get_track_id(link['url'])
       if track_id is None:
         continue
 
       spotify_track = SpotifyTrack(track_id, data['team_id'], data['event']['user'])
-
-      if dao.get_spotify_track(spotify_track):
-        client.chat_postMessage(channel=data['event']['channel'],
-                                text=f'Looks like this track has already been added')
+      existing_track = dao.get_spotify_track(spotify_track)
+      if existing_track:
+        if spotify_track.slack_user_id is not None:
+          dupe_message = f"{random.choice(failure_messages)} This was added on {spotify_track.get_date()}, credit to <@{spotify_track.slack_user_id}>."
+        else:
+          dupe_message = f"{random.choice(failure_messages)} This was added sometime before {spotify_track.get_date()}."
+        client.chat_postMessage(channel=slack_channel_id,
+                                text=dupe_message)
         return SUCCESS
 
       dao.insert_spotify_track(spotify_track)
-      spotify_api.add_track(spotify_track)
-    client.chat_postMessage(channel=data['event']['channel'],
+      spotify_api.add_track(slack_channel.spotify_playlist_id, spotify_track)
+    client.chat_postMessage(channel=slack_channel_id,
                             text=f"{random.choice(success_messages)}")
     print(event)
   except Exception as e:
-    client.chat_postMessage(channel=data['event']['channel'],
-                            text='Ruh uh. Something happened @lou.')
-    print(traceback.format_exc())
+    client.chat_postMessage(channel=slack_channel_id,
+                            text=traceback.format_exc())
   finally:
     return SUCCESS

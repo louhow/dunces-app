@@ -1,7 +1,7 @@
+from dataclasses import fields
+
 import boto3
 import os
-
-from dataclasses import fields
 
 from service.models import SlackChannel, SlackUser, SpotifyTrack
 
@@ -14,10 +14,15 @@ DEFAULT_SLACK_USER = SlackUser(
 
 def dataclass_from_dict(klass, dikt):
   try:
-    fieldtypes = {f.name: f.type for f in fields(klass)}
-    return klass(**{f: dataclass_from_dict(fieldtypes[f], dikt[f]) for f in dikt})
+    # the database will return values that are re-computed by the dataclasses, so
+    # remove those to keep dataclasses from throwing up when initialized
+    for f in fields(klass):
+      if f.init is False:
+        dikt.pop(f.name, None)
+
+    return klass(**dikt)
   except Exception:
-    raise Exception(f'Unable to convert {dikt} to {klass}.')
+    raise Exception(f'Unable to convert {dikt} to {klass}. fieldtypes: {fields(klass)}')
 
 
 class Dao(object):
@@ -47,16 +52,13 @@ class Dao(object):
     self.table.put_item(Item={**some_dict})
 
   def __fetch_item(self, klass, item):
-    dict = self.table.get_item(
+    dikt = self.table.get_item(
       Key={
         'PK': item.PK,
         'SK': item.SK
       }
     )
 
-    print(klass)
-    print(dict)
+    item = dikt.get('Item', None)
 
-    return dataclass_from_dict(klass, dict) if dict is not None else None
-
-
+    return dataclass_from_dict(klass, item) if item else None

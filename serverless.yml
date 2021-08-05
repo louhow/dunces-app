@@ -9,18 +9,18 @@ provider:
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
     SPOTIFY_THREAD_PLAYLIST_ID: 2xFUdaxNcITI4xP52ZzYos
-    APP_KEY: 123
-    SLACK_BOT_TOKEN: 535
-    SPOTIFY_CLIENT_ID: asdf
-    SPOTIFY_CLIENT_SECRET: dfa
-    DEFAULT_SPOTIFY_USER_NAME_ENCRYPT: adsf
-    DEFAULT_SPOTIFY_USER_REFRESH_TOKEN_ENCRYPT: adfasfd
-#    APP_KEY: ${ssm:/Config/Prod/Dunces/Key~true}
-#    SLACK_BOT_TOKEN: ${ssm:/Config/Test/Slack/BotToken~true}
-#    SPOTIFY_CLIENT_ID: ${ssm:/Config/Prod/SpotifyClientId~true}
-#    SPOTIFY_CLIENT_SECRET: ${ssm:/Config/Prod/SpotifyClientSecret~true}
-#    DEFAULT_SPOTIFY_USER_NAME_ENCRYPT: ${ssm:/Config/Prod/SpotifyDefaultUser~true}
-#    DEFAULT_SPOTIFY_USER_REFRESH_TOKEN_ENCRYPT: ${ssm:/Config/Prod/SpotifyDefaultRefreshToken~true}
+#    APP_KEY: 123
+#    SLACK_BOT_TOKEN: 535
+#    SPOTIFY_CLIENT_ID: asdf
+#    SPOTIFY_CLIENT_SECRET: dfa
+#    DEFAULT_SPOTIFY_USER_NAME_ENCRYPT: adsf
+#    DEFAULT_SPOTIFY_USER_REFRESH_TOKEN_ENCRYPT: adfasfd
+    APP_KEY: ${ssm:/Config/Prod/Dunces/Key~true}
+    SLACK_BOT_TOKEN: ${ssm:/Config/Test/Slack/BotToken~true}
+    SPOTIFY_CLIENT_ID: ${ssm:/Config/Prod/SpotifyClientId~true}
+    SPOTIFY_CLIENT_SECRET: ${ssm:/Config/Prod/SpotifyClientSecret~true}
+    DEFAULT_SPOTIFY_USER_NAME_ENCRYPT: ${ssm:/Config/Prod/SpotifyDefaultUser~true}
+    DEFAULT_SPOTIFY_USER_REFRESH_TOKEN_ENCRYPT: ${ssm:/Config/Prod/SpotifyDefaultRefreshToken~true}
     STAGE: ${opt:stage, self:provider.stage}
   iamRoleStatements:
     - Effect: Allow

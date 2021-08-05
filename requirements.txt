@@ -1,4 +1,5 @@
 boto3
+pytz
 slack_sdk
 spotipy
 requests
