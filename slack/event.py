@@ -46,7 +46,7 @@ def get_track_id(link):
 
 def handler(event, context):
   data = json.loads(event['body'])
-  # TODO verify challenge
+
   if "challenge" in data:
     return {
       "statusCode": 200,
@@ -56,7 +56,7 @@ def handler(event, context):
       }
     }
 
-  if data['event']['is_bot_user_member'] is False:
+  if data['event'].get('is_bot_user_member', False) is False:
     return SUCCESS
 
   dao.blind_write({**{"PK": "audit", "SK": "event"}, **event})
