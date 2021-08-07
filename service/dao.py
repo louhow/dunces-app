@@ -26,8 +26,13 @@ def dataclass_from_dict(klass, dikt):
 
 
 class Dao(object):
-  def __init__(self, table_name):
-    client = boto3.resource('dynamodb')
+  def __init__(self, table_name, public_key=None, private_key=None):
+    if public_key is not None and private_key is not None:
+      session = boto3.Session(aws_access_key_id=public_key, aws_secret_access_key=private_key)
+      client = session.resource('dynamodb')
+    else:
+      client = boto3.resource('dynamodb')
+
     self.table = client.Table(table_name)
 
   def get_spotify_track(self, spotify_track: SpotifyTrack) -> SpotifyTrack:

@@ -67,4 +67,4 @@ class SlackRequest:
     self.user_id: str = event.get('user')
     self.type: SlackEventType = SlackEventType[event.get('type', '').upper()]
     self.is_bot_message: bool = event.get('bot_id', None) is not None
-    self.text = event.get('text', None)  # TODO remove None after removing link_shared events
+    self.text = event.get('text')

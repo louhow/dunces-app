@@ -77,6 +77,7 @@ def handler(event, context):
       return SUCCESS
 
     # Now let's do work!
+    # TODO replace the get/insert pattern with a single insert to save money
     spotify_track = SpotifyTrack(track_id, req.team_id, req.user_id)
     existing_track = dao.get_spotify_track(spotify_track)
     if existing_track:
