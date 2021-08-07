@@ -8,11 +8,11 @@ import pytz
 @dataclass
 class SpotifyTrack:
   spotify_track_id: str
+  spotify_playlist_id: str
   slack_team_id: str
   slack_user_id: str = None  # Some old playlist items were added before auditing occurred
   slack_team_user_id: str = field(init=False)
   create_time: str = datetime.now(timezone.utc).isoformat()
-  spotify_playlist_id: str = os.environ['SPOTIFY_THREAD_PLAYLIST_ID']
   PK: str = field(init=False)
   SK: str = field(init=False)
 

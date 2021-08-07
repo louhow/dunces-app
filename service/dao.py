@@ -42,16 +42,17 @@ class Dao(object):
     found_user = self.__fetch_item(SlackUser, slack_user)
     return found_user if found_user else DEFAULT_SLACK_USER
 
-  def get_slack_channel(self, slack_channel: SlackChannel):
-    found_slack_channel = self.__fetch_item(SlackChannel, slack_channel)
-    return found_slack_channel if found_slack_channel else SlackChannel(
-      slack_channel.slack_team_id,
-      slack_channel.slack_channel_id,
-      os.environ['SPOTIFY_THREAD_PLAYLIST_ID']
-    )
+  def get_slack_channel(self, slack_channel: SlackChannel) -> SlackChannel:
+    return self.__fetch_item(SlackChannel, slack_channel)
+
+  def insert_slack_channel(self, slack_channel: SlackChannel):
+    return self.__insert_dataclass(slack_channel)
 
   def insert_spotify_track(self, spotify_track: SpotifyTrack):
-    self.table.put_item(Item={**spotify_track.__dict__})
+    return self.__insert_dataclass(spotify_track)
+
+  def __insert_dataclass(self, some_dataclass):
+    self.table.put_item(Item={**some_dataclass.__dict__})
 
   def blind_write(self, some_dict):
     self.table.put_item(Item={**some_dict})

@@ -22,7 +22,7 @@ success_messages = [
   "10-4, Ghost Rider.",
   "I gotchu mayne",
   "Put it in the books!",
-  "Thank you for using BotBot.",
+  "Thank you for your patronage.",
   "Mmm, that's good music."
 ]
 
@@ -39,8 +39,13 @@ SUCCESS = {
 }
 
 
-def get_track_id(link):
-  z = re.match(r'.*https://open.spotify.com/track/(\w+).*', link)
+def get_track_id(some_str):
+  z = re.match(r'.*https://open.spotify.com/track/(\w+).*', some_str)
+  return z.group(1) if z and len(z.groups()) >= 1 else None
+
+
+def get_playlist_id(some_str):
+  z = re.match(r'.*https://open.spotify.com/playlist/(\w+).*', some_str)
   return z.group(1) if z and len(z.groups()) >= 1 else None
 
 
@@ -61,10 +66,19 @@ def handler(event, context):
   try:
     req = SlackRequest(event_body)
 
-    if req.type in [SlackEventType.APP_MENTION]:
+    if req.type is SlackEventType.MESSAGE and req.is_bot_message:
       return SUCCESS
 
-    if req.type is SlackEventType.MESSAGE and req.is_bot_message:
+    if req.type in [SlackEventType.APP_MENTION]:
+      playlist_id = get_playlist_id(req.text)
+      if playlist_id is not None:
+        dao.insert_slack_channel(SlackChannel(req.team_id, req.channel_id, playlist_id))
+        client.chat_postMessage(channel=req.channel_id,
+                                text=f"Set playlist {playlist_id} as the default for this channel")
+      else:
+        client.chat_postMessage(channel=req.channel_id,
+                                text="Sorry, I don't know what to do with that. I can only set default playlists for now")
+
       return SUCCESS
 
     if 'skip' in req.text:
@@ -78,7 +92,13 @@ def handler(event, context):
 
     # Now let's do work!
     # TODO replace the get/insert pattern with a single insert to save money
-    spotify_track = SpotifyTrack(track_id, req.team_id, req.user_id)
+    slack_channel = dao.get_slack_channel(SlackChannel(req.team_id, req.channel_id))
+    if slack_channel is None:
+      client.chat_postMessage(channel=req.channel_id,
+                              text='Cannot add track because playlist is not yet set.')
+      return SUCCESS
+
+    spotify_track = SpotifyTrack(track_id, slack_channel.spotify_playlist_id, req.team_id, req.user_id)
     existing_track = dao.get_spotify_track(spotify_track)
     if existing_track:
       if spotify_track.slack_user_id is not None:
@@ -92,7 +112,6 @@ def handler(event, context):
     dao.insert_spotify_track(spotify_track)
     slack_user = dao.get_slack_user(SlackUser(req.team_id, req.user_id))
     spotify_api = SpotifyApi(slack_user, cipher_suite)
-    slack_channel = dao.get_slack_channel(SlackChannel(req.team_id, req.user_id))
     spotify_api.add_track(slack_channel.spotify_playlist_id, spotify_track)
     client.chat_postMessage(channel=req.channel_id,
                             text=f"{random.choice(success_messages)}")
