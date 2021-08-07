@@ -7,9 +7,9 @@ from service.models import SlackChannel, SlackUser, SpotifyTrack
 
 DEFAULT_SLACK_USER = SlackUser(
   'dont',
-  'care',
-  os.environ['DEFAULT_SPOTIFY_USER_NAME_ENCRYPT'],
-  os.environ['DEFAULT_SPOTIFY_USER_REFRESH_TOKEN_ENCRYPT'])
+  'care', '', '')
+  # os.environ['DEFAULT_SPOTIFY_USER_NAME_ENCRYPT'],
+  # os.environ['DEFAULT_SPOTIFY_USER_REFRESH_TOKEN_ENCRYPT'])
 
 
 def dataclass_from_dict(klass, dikt):

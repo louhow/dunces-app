@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-import os
 import pytz
 
 
@@ -11,8 +10,8 @@ class SpotifyTrack:
   spotify_playlist_id: str
   slack_team_id: str
   slack_user_id: str = None  # Some old playlist items were added before auditing occurred
-  slack_team_user_id: str = field(init=False)
   create_time: str = datetime.now(timezone.utc).isoformat()
+  slack_team_user_id: str = field(init=False)
   PK: str = field(init=False)
   SK: str = field(init=False)
 
@@ -33,6 +32,7 @@ class SlackUser:
   slack_user_id: str
   spotify_user_name_encrypt: str = None
   spotify_refresh_token_encrypt: str = None
+  create_time: str = datetime.now(timezone.utc).isoformat()
   PK: str = field(init=False)
   SK: str = field(init=False)
 
@@ -46,6 +46,7 @@ class SlackChannel:
   slack_team_id: str
   slack_channel_id: str
   spotify_playlist_id: str = None
+  create_time: str = datetime.now(timezone.utc).isoformat()
   PK: str = field(init=False)
   SK: str = field(init=False)
 
