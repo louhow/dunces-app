@@ -17,7 +17,6 @@ In order to deploy the endpoint simply run
 serverless deploy
 ```
 
-
 ```
 Required Scopes
 

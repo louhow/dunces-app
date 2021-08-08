@@ -55,6 +55,18 @@ class SlackChannel:
     self.SK = f'CHANNEL#{self.slack_team_id}#{self.slack_channel_id}'
 
 
+@dataclass
+class SlackTeam:
+  slack_team_id: str
+  slack_oauth_token_encrypt: str = None
+  PK: str = field(init=False)
+  SK: str = field(init=False)
+
+  def __post_init__(self):
+    self.PK = f'TEAM#{self.slack_team_id}'
+    self.SK = f'TEAM#{self.slack_team_id}'
+
+
 class SlackEventType(Enum):
   MESSAGE = 'message'
   APP_MENTION = 'app_mention'
@@ -63,7 +75,7 @@ class SlackEventType(Enum):
 class SlackRequest:
   def __init__(self, request):
     event = request.get('event', {})
-    self.team_id: str = event.get('team')
+    self.team_id: str = request.get('team_id', event.get('team'))
     self.channel_id: str = event.get('channel')
     self.user_id: str = event.get('user')
     self.type: SlackEventType = SlackEventType[event.get('type', '').upper()]

@@ -8,9 +8,12 @@ provider:
   profile: dunce
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
-#    SPOTIFY_THREAD_PLAYLIST_ID: ${ssm:/Config/${opt:stage, self:provider.stage}/SpotifyDefaultPlaylistId~true} # 2xFUdaxNcITI4xP52ZzYos
     APP_KEY: ${ssm:/Config/Prod/Dunces/Key~true}
-    SLACK_BOT_TOKEN: ${ssm:/Config/Test/Slack/BotToken~true}  # TODO change this to prod (only one)
+    APP_STATE: ${ssm:/Config/Prod/Dunces/AppState~true}
+    SLACK_BOT_TOKEN: ${ssm:/Config/Prod/Slack/BotToken~true}
+    SLACK_CLIENT_ID: ${ssm:/Config/Prod/Slack/ClientId~true}
+    SLACK_CLIENT_SECRET: ${ssm:/Config/Prod/Slack/ClientSecret~true}
+    SLACK_SIGNING_SECRET: ${ssm:/Config/Prod/Slack/SigningSecret~true}
     SPOTIFY_CLIENT_ID: ${ssm:/Config/Prod/SpotifyClientId~true}
     SPOTIFY_CLIENT_SECRET: ${ssm:/Config/Prod/SpotifyClientSecret~true}
     DEFAULT_SPOTIFY_USER_NAME_ENCRYPT: ${ssm:/Config/Prod/SpotifyDefaultUser~true}
@@ -34,6 +37,20 @@ functions:
       - http:
           path: slack/handler
           method: post
+          cors: true
+  slack_oauth_pre:
+    handler: slack/oauth.pre_install
+    events:
+      - http:
+          path: slack/begin_auth
+          method: get
+          cors: true
+  slack_oauth_post:
+    handler: slack/oauth.post_install
+    events:
+      - http:
+          path: slack/end_auth
+          method: get
           cors: true
 
 resources:

@@ -3,26 +3,26 @@ from dataclasses import fields
 import boto3
 import os
 
-from service.models import SlackChannel, SlackUser, SpotifyTrack
+from service.models import SlackChannel, SlackUser, SpotifyTrack, SlackTeam
 
 DEFAULT_SLACK_USER = SlackUser(
   'dont',
-  'care', '', '')
-  # os.environ['DEFAULT_SPOTIFY_USER_NAME_ENCRYPT'],
-  # os.environ['DEFAULT_SPOTIFY_USER_REFRESH_TOKEN_ENCRYPT'])
+  'care',
+  os.environ['DEFAULT_SPOTIFY_USER_NAME_ENCRYPT'],
+  os.environ['DEFAULT_SPOTIFY_USER_REFRESH_TOKEN_ENCRYPT'])
 
 
-def dataclass_from_dict(klass, dikt):
+def dataclass_from_dict(klass, some_dict):
   try:
     # the database will return values that are re-computed by the dataclasses, so
     # remove those to keep dataclasses from throwing up when initialized
     for f in fields(klass):
       if f.init is False:
-        dikt.pop(f.name, None)
+        some_dict.pop(f.name, None)
 
-    return klass(**dikt)
+    return klass(**some_dict)
   except Exception:
-    raise Exception(f'Unable to convert {dikt} to {klass}. fieldtypes: {fields(klass)}')
+    raise Exception(f'Unable to convert {some_dict} to {klass}. fieldtypes: {fields(klass)}')
 
 
 class Dao(object):
@@ -45,26 +45,32 @@ class Dao(object):
   def get_slack_channel(self, slack_channel: SlackChannel) -> SlackChannel:
     return self.__fetch_item(SlackChannel, slack_channel)
 
+  def get_slack_team(self, slack_team: SlackTeam) -> SlackTeam:
+    return self.__fetch_item(SlackTeam, slack_team)
+
   def insert_slack_channel(self, slack_channel: SlackChannel):
     return self.__insert_dataclass(slack_channel)
 
   def insert_spotify_track(self, spotify_track: SpotifyTrack):
     return self.__insert_dataclass(spotify_track)
 
+  def insert_slack_team(self, slack_team: SlackTeam):
+    return self.__insert_dataclass(slack_team)
+
   def __insert_dataclass(self, some_dataclass):
     self.table.put_item(Item={**some_dataclass.__dict__})
 
-  def blind_write(self, some_dict):
-    self.table.put_item(Item={**some_dict})
+  def blind_write(self, pk, sk, some_dict):
+    self.table.put_item(Item={**{"PK": pk, "SK": sk}, **some_dict})
 
   def __fetch_item(self, klass, item):
-    dikt = self.table.get_item(
+    some_dict = self.table.get_item(
       Key={
         'PK': item.PK,
         'SK': item.SK
       }
     )
 
-    item = dikt.get('Item', None)
+    item = some_dict.get('Item', None)
 
     return dataclass_from_dict(klass, item) if item else None
