@@ -40,7 +40,7 @@ SUCCESS = {
 
 
 def get_track_id(some_str):
-  z = re.match(r'.*https://open.spotify.com/track/(\w+).*', some_str)
+  z = re.search(r'.*https://open.spotify.com/track/(\w+).*', some_str)
   return z.group(1) if z and len(z.groups()) >= 1 else None
 
 
@@ -54,6 +54,7 @@ def send_message(req: SlackRequest, message: str):
   slack_client = WebClient(CIPHER_SUITE.decrypt(slack_team.slack_oauth_token_encrypt))
   slack_client.chat_postMessage(channel=req.channel_id,
                                 text=message)
+
 
 def handler(event, context):
   event_body = json.loads(event['body'])

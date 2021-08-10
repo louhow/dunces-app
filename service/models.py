@@ -5,19 +5,25 @@ import pytz
 
 
 @dataclass
-class SpotifyTrack:
+class DynamoClass:
+  PK: str = field(init=False)
+  SK: str = field(init=False)
+  data_type: str = field(init=False)
+
+
+@dataclass
+class SpotifyTrack(DynamoClass):
   spotify_track_id: str
   spotify_playlist_id: str
   slack_team_id: str
   slack_user_id: str = None  # Some old playlist items were added before auditing occurred
   create_time: str = datetime.now(timezone.utc).isoformat()
   slack_team_user_id: str = field(init=False)
-  PK: str = field(init=False)
-  SK: str = field(init=False)
 
   def __post_init__(self):
     self.PK = f'PLAYLIST#{self.slack_team_id}#{self.spotify_playlist_id}'
     self.SK = f'TRACK#{self.spotify_track_id}'
+    self.data_type = 'SpotifyTrack'
     self.slack_team_user_id = f'USER#{self.slack_team_id}#{self.slack_user_id}'
 
   def get_date(self):
@@ -27,44 +33,41 @@ class SpotifyTrack:
 
 
 @dataclass
-class SlackUser:
+class SlackUser(DynamoClass):
   slack_team_id: str
   slack_user_id: str
   spotify_user_name_encrypt: str = None
   spotify_refresh_token_encrypt: str = None
   create_time: str = datetime.now(timezone.utc).isoformat()
-  PK: str = field(init=False)
-  SK: str = field(init=False)
 
   def __post_init__(self):
     self.PK = f'USER#{self.slack_team_id}#{self.slack_user_id}'
     self.SK = f'USER#{self.slack_team_id}#{self.slack_user_id}'
+    self.data_type = 'SlackUser'
 
 
 @dataclass
-class SlackChannel:
+class SlackChannel(DynamoClass):
   slack_team_id: str
   slack_channel_id: str
   spotify_playlist_id: str = None
   create_time: str = datetime.now(timezone.utc).isoformat()
-  PK: str = field(init=False)
-  SK: str = field(init=False)
 
   def __post_init__(self):
     self.PK = f'CHANNEL#{self.slack_team_id}#{self.slack_channel_id}'
     self.SK = f'CHANNEL#{self.slack_team_id}#{self.slack_channel_id}'
+    self.data_type = 'SlackChannel'
 
 
 @dataclass
-class SlackTeam:
+class SlackTeam(DynamoClass):
   slack_team_id: str
   slack_oauth_token_encrypt: str = None
-  PK: str = field(init=False)
-  SK: str = field(init=False)
 
   def __post_init__(self):
     self.PK = f'TEAM#{self.slack_team_id}'
     self.SK = f'TEAM#{self.slack_team_id}'
+    self.data_type = 'SlackTeam'
 
 
 class SlackEventType(Enum):
