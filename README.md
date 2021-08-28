@@ -27,7 +27,7 @@ channels:history
 View messages and other content in public channels that sandbox-bot has been added to
 
 chat:write
-Send messages as @sandboxbot
+Send messages as @some-bot
 
 groups:history
 View messages and other content in private channels that sandbox-bot has been added to

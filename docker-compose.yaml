@@ -4,18 +4,18 @@ services:
   localstack-dynamodb:
     image: localstack/localstack
     ports:
-      - "4569:4569"
+      - "4566:4566"
     environment:
       - "SERVICES=dynamodb"
     restart: always
 
   create-dynamodb-tables:
     image: xueshanf/awscli:latest
-    command: sh -c '/var/scripts/wait-for.sh localstack-dynamodb:4569 -- /var/scripts/create-dynamodb-tables.sh'
+    command: sh -c '/var/scripts/wait-for.sh localstack-dynamodb:4566 -- /var/scripts/create-dynamodb-tables.sh'
     volumes:
       - "./scripts/:/var/scripts"
     environment:
-      - AWS_ACCESS_KEY_ID=intentionally-invalid-key
-      - AWS_SECRET_ACCESS_KEY=intentionally-invalid-key
+      - AWS_ACCESS_KEY_ID=ignorethis
+      - AWS_SECRET_ACCESS_KEY=ignorethis
     depends_on:
       - localstack-dynamodb

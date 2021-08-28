@@ -1,6 +1,6 @@
 #!/bin/sh
 
-DYNAMODB_ENDPOINT=http://localstack-dynamodb:4569
+DYNAMODB_ENDPOINT=http://localstack-dynamodb:4566
 
 aws --region us-east-1 --endpoint-url ${DYNAMODB_ENDPOINT} dynamodb create-table \
   --table-name dunces-app-local                                             \

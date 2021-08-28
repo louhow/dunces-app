@@ -12,6 +12,20 @@ class DynamoClass:
 
 
 @dataclass
+class Recommendation(DynamoClass):
+  slack_team_id: str
+  slack_user_id: [str]
+  title: str
+  count_recommends: int
+  create_time: str = datetime.now(timezone.utc).isoformat()
+
+  def __post_init__(self):
+    self.PK = f'TEAM#{self.slack_team_id}'
+    self.SK = f'RECOMMENDATION#{self.title.upper()}'
+    self.data_type = 'Recommendation'
+
+
+@dataclass
 class SpotifyTrack(DynamoClass):
   spotify_track_id: str
   spotify_playlist_id: str
