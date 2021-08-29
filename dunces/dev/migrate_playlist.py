@@ -1,6 +1,5 @@
 from settings import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
-from service.dao import Dao
-from service.models import SpotifyTrack
+from dunces.helpers.dao import Dao
 
 dao = Dao('the-app-dev', AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
 tracks = []

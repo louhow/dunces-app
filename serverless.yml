@@ -32,21 +32,21 @@ provider:
 
 functions:
   slack:
-    handler: slack/event.handler
+    handler: dunces/handlers/slack_event.handler
     events:
       - http:
           path: slack/handler
           method: post
           cors: true
   slack_oauth_pre:
-    handler: slack/oauth.pre_install
+    handler: dunces/handlers/slack_oauth.pre_install
     events:
       - http:
           path: slack/begin_auth
           method: get
           cors: true
   slack_oauth_post:
-    handler: slack/oauth.post_install
+    handler: dunces/handlers/slack_oauth.post_install
     events:
       - http:
           path: slack/end_auth

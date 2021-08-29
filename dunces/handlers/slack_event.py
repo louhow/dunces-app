@@ -6,11 +6,11 @@ import traceback
 import random
 
 
-from service.dao import Dao
-from service.models import SpotifyTrack, SlackUser, SlackChannel, SlackRequest, SlackEventType, \
+from dunces.helpers.dao import Dao
+from dunces.models import SpotifyTrack, SlackUser, SlackChannel, SlackRequest, SlackEventType, \
   SlackTeam
-from service.secure import CipherSuite
-from service.spotify_api import SpotifyApi
+from dunces.helpers.secure import CipherSuite
+from dunces.helpers.spotify_api import SpotifyApi
 
 DAO = Dao(os.environ['DYNAMODB_TABLE'])
 CIPHER_SUITE = CipherSuite(os.environ['APP_KEY'])

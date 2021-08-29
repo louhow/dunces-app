@@ -4,8 +4,8 @@ import os
 import requests
 import spotipy
 
-from service.models import SlackUser, SpotifyTrack
-from service.secure import CipherSuite
+from dunces.models import SlackUser, SpotifyTrack
+from dunces.helpers.secure import CipherSuite
 
 
 class SpotifyApi(object):

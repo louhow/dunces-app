@@ -1,5 +1,4 @@
-import boto3
-from service.models import SpotifyTrack
+from dunces.models import SpotifyTrack
 
 spotify_track = SpotifyTrack('track_id', 'playlist_id', 'team_id')
 

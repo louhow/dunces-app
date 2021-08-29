@@ -3,7 +3,7 @@ from dataclasses import fields
 import boto3
 import os
 
-from service.models import SlackChannel, SlackUser, SpotifyTrack, SlackTeam
+from dunces.models import SlackChannel, SlackUser, SpotifyTrack, SlackTeam
 
 DEFAULT_SLACK_USER = SlackUser(
   'dont',
