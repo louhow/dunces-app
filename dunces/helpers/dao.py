@@ -61,9 +61,10 @@ class Dao(object):
 
   def __insert_dataclass(self, some_dataclass):
     self.table.put_item(Item={**some_dataclass.__dict__})
+    return some_dataclass
 
   def blind_write(self, pk, sk, some_dict):
-    self.table.put_item(Item={**{"PK": pk, "SK": sk}, **some_dict})
+    return self.table.put_item(Item={**{"PK": pk, "SK": sk}, **some_dict})
 
   def __fetch_item(self, item, klass):
     some_dict = self.table.get_item(

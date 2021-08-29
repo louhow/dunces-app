@@ -8,6 +8,12 @@ pip install -r requirements.txt
 npm install -g serverless
 npm install --save serverless-python-requirements
 ```
+## Test
+
+```bash
+pytest -c config_test.ini
+```
+
 
 ## Deploy
 

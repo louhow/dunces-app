@@ -5,3 +5,5 @@ slack_sdk
 spotipy
 requests
 cryptography
+pytest
+pytest-env

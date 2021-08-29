@@ -80,20 +80,20 @@ resources:
 
 plugins:
   - serverless-python-requirements
-  - serverless-localstack
+#  - serverless-localstack
 
 custom:
-  localstack:
-    stages:
-      - local
-    host: http://localhost  # optional - LocalStack host to connect to
-    edgePort: 4566  # optional - LocalStack edge port to connect to
-    autostart: true  # optional - Start LocalStack in Docker on Serverless deploy
-    lambda:
-      # Enable this flag to improve performance
-      mountCode: True
-    docker:
-      # Enable this flag to run "docker ..." commands as sudo
-      sudo: False
+#  localstack:
+#    stages:
+#      - local
+#    host: http://localhost  # optional - LocalStack host to connect to
+#    edgePort: 4566  # optional - LocalStack edge port to connect to
+#    autostart: true  # optional - Start LocalStack in Docker on Serverless deploy
+#    lambda:
+#      # Enable this flag to improve performance
+#      mountCode: True
+#    docker:
+#      # Enable this flag to run "docker ..." commands as sudo
+#      sudo: False
   pythonRequirements:
     dockerizePip: true
