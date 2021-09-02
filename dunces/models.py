@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
+from typing import List
+
 import pytz
 
 
@@ -11,17 +13,26 @@ class DynamoClass:
   data_type: str = field(init=False)
 
 
-@dataclass
+@dataclass(order=True)
+class SlackUserRecommendation:
+  slack_user_id: str
+  recommendation_note: str = None
+  create_time: str = datetime.now(timezone.utc).isoformat()
+
+
+@dataclass(order=True)
 class Recommendation(DynamoClass):
   slack_team_id: str
-  slack_user_id: [str]
   title: str
-  count_recommends: int
+  slack_user_recommendations: List[SlackUserRecommendation]
+  count_recommends: int = field(init=False)
   create_time: str = datetime.now(timezone.utc).isoformat()
 
   def __post_init__(self):
+    self.title = self.title.upper()
+    self.count_recommends = len(self.slack_user_recommendations)
     self.PK = f'TEAM#{self.slack_team_id}'
-    self.SK = f'RECOMMENDATION#{self.title.upper()}'
+    self.SK = f'RECOMMENDATION#{self.title}'
     self.data_type = 'Recommendation'
 
 
@@ -54,6 +65,7 @@ class SlackUser(DynamoClass):
   spotify_refresh_token_encrypt: str = None
   create_time: str = datetime.now(timezone.utc).isoformat()
 
+  # TODO migrate PK/SK to TEAM#*/USER#*
   def __post_init__(self):
     self.PK = f'USER#{self.slack_team_id}#{self.slack_user_id}'
     self.SK = f'USER#{self.slack_team_id}#{self.slack_user_id}'
@@ -67,6 +79,7 @@ class SlackChannel(DynamoClass):
   spotify_playlist_id: str = None
   create_time: str = datetime.now(timezone.utc).isoformat()
 
+  # TODO migrate PK/SK to TEAM#*/CHANNEL#*
   def __post_init__(self):
     self.PK = f'CHANNEL#{self.slack_team_id}#{self.slack_channel_id}'
     self.SK = f'CHANNEL#{self.slack_team_id}#{self.slack_channel_id}'

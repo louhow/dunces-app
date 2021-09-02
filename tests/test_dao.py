@@ -1,12 +1,15 @@
 from unittest import TestCase
+from dataclasses import asdict
 import pytest
 
 from dunces.helpers.dao import Dao
-from dunces.models import SpotifyTrack
+from dunces.models import SpotifyTrack, Recommendation, SlackUserRecommendation
 
 
 class TestDao(TestCase):
   dao = Dao("dunces-app-local", endpoint_url="http://localhost:4566")
+  # test_case = TestCase()
+  # test_case.maxDiff = 1000
 
   @pytest.fixture(autouse=True)
   def run_around_tests(self):
@@ -14,11 +17,22 @@ class TestDao(TestCase):
     yield
     assert True
 
-  def test_insert_spotify_track(self):
+  def test_put_item(self):
     track_to_insert = SpotifyTrack("track_id", "playlist_id", "slack_team_id")
-    assert self.dao.get_spotify_track(track_to_insert) is None
-    track = self.dao.insert_spotify_track(SpotifyTrack("track_id", "playlist_id", "slack_team_id"))
-    assert self.dao.get_spotify_track(track) is not None
+    assert self.dao.get_item(track_to_insert) is None
+    track = self.dao.put_item(SpotifyTrack("track_id", "playlist_id", "slack_team_id"))
+    assert self.dao.get_item(track) is not None
+
+  def test_get_nested_dataclass_items(self):
+    recommendation = Recommendation(
+      "slack_team_id",
+      "title",
+      [SlackUserRecommendation("slack_user_id", "some note")]
+    )
+    self.dao.put_item(recommendation)
+    actual = self.dao.get_items(recommendation.PK, Recommendation)
+    assert len(actual) is 1
+    TestCase().assertDictEqual(asdict(actual[0]), asdict(recommendation))
 
   def _truncate_data(self):
     scan = None

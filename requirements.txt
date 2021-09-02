@@ -7,3 +7,4 @@ requests
 cryptography
 pytest
 pytest-env
+dacite

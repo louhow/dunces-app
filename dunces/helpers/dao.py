@@ -1,28 +1,14 @@
-from dataclasses import fields
+from dataclasses import asdict
+from typing import List, Type, TypeVar
 
+from dacite import from_dict, Config as DaciteConfig
+from boto3.dynamodb.conditions import Key
 import boto3
-import os
 
-from dunces.models import SlackChannel, SlackUser, SpotifyTrack, SlackTeam
+from dunces.models import DynamoClass
 
-DEFAULT_SLACK_USER = SlackUser(
-  'dont',
-  'care',
-  os.environ['DEFAULT_SPOTIFY_USER_NAME_ENCRYPT'],
-  os.environ['DEFAULT_SPOTIFY_USER_REFRESH_TOKEN_ENCRYPT'])
-
-
-def dataclass_from_dict(klass, some_dict):
-  try:
-    # the database will return values that are re-computed by the dataclasses, so
-    # remove those to keep dataclasses from throwing up when initialized
-    for f in fields(klass):
-      if f.init is False:
-        some_dict.pop(f.name, None)
-
-    return klass(**some_dict)
-  except Exception:
-    raise Exception(f'Unable to convert {some_dict} to {klass}. fieldtypes: {fields(klass)}')
+T = TypeVar('T', bound=DynamoClass)
+DACITE_CONFIG = DaciteConfig(check_types=False, type_hooks={List: List})
 
 
 class Dao(object):
@@ -37,36 +23,11 @@ class Dao(object):
 
     self.table = client.Table(table_name)
 
-  def get_spotify_track(self, spotify_track: SpotifyTrack) -> SpotifyTrack:
-    return self.__fetch_item(spotify_track, SpotifyTrack)
+  def put_item(self, item: T) -> T:
+    self.put_dictionary(item.PK, item.SK, asdict(item))
+    return item
 
-  def get_slack_user(self, slack_user: SlackUser) -> SlackUser:
-    found_user = self.__fetch_item(slack_user, SlackUser)
-    return found_user if found_user else DEFAULT_SLACK_USER
-
-  def get_slack_channel(self, slack_channel: SlackChannel) -> SlackChannel:
-    return self.__fetch_item(slack_channel, SlackChannel)
-
-  def get_slack_team(self, slack_team: SlackTeam) -> SlackTeam:
-    return self.__fetch_item(slack_team, SlackTeam)
-
-  def insert_slack_channel(self, slack_channel: SlackChannel):
-    return self.__insert_dataclass(slack_channel)
-
-  def insert_spotify_track(self, spotify_track: SpotifyTrack):
-    return self.__insert_dataclass(spotify_track)
-
-  def insert_slack_team(self, slack_team: SlackTeam):
-    return self.__insert_dataclass(slack_team)
-
-  def __insert_dataclass(self, some_dataclass):
-    self.table.put_item(Item={**some_dataclass.__dict__})
-    return some_dataclass
-
-  def blind_write(self, pk, sk, some_dict):
-    return self.table.put_item(Item={**{"PK": pk, "SK": sk}, **some_dict})
-
-  def __fetch_item(self, item, klass):
+  def get_item(self, item: T) -> T:
     some_dict = self.table.get_item(
       Key={
         'PK': item.PK,
@@ -74,6 +35,14 @@ class Dao(object):
       }
     )
 
-    item = some_dict.get('Item', None)
+    returned_item = some_dict.get('Item', None)
 
-    return dataclass_from_dict(klass, item) if item else None
+    return from_dict(item.__class__, returned_item, DACITE_CONFIG) if returned_item else None
+
+  def get_items(self, pk, some_class: Type[T]) -> [T]:
+    response = self.table.query(KeyConditionExpression=Key('PK').eq(pk))
+    items = response.get('Items', None)
+    return list(map(lambda item: from_dict(some_class, item, DACITE_CONFIG), items)) if items else []
+
+  def put_dictionary(self, pk, sk, some_dict):
+    return self.table.put_item(Item={**{"PK": pk, "SK": sk}, **some_dict})

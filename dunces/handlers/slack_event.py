@@ -5,7 +5,6 @@ from slack_sdk import WebClient
 import traceback
 import random
 
-
 from dunces.helpers.dao import Dao
 from dunces.models import SpotifyTrack, SlackUser, SlackChannel, SlackRequest, SlackEventType, \
   SlackTeam
@@ -14,6 +13,11 @@ from dunces.helpers.spotify_api import SpotifyApi
 
 DAO = Dao(os.environ['DYNAMODB_TABLE'])
 CIPHER_SUITE = CipherSuite(os.environ['APP_KEY'])
+DEFAULT_SLACK_USER = SlackUser(
+  'dont',
+  'care',
+  os.environ['DEFAULT_SPOTIFY_USER_NAME_ENCRYPT'],
+  os.environ['DEFAULT_SPOTIFY_USER_REFRESH_TOKEN_ENCRYPT'])
 
 success_messages = [
   "Track added!",
@@ -23,7 +27,9 @@ success_messages = [
   "I gotchu mayne",
   "Put it in the books!",
   "Thank you for your patronage.",
-  "Mmm, that's good music."
+  "Mmm, that's good music.",
+  "Much obliged.",
+  "I dig it."
 ]
 
 failure_messages = [
@@ -50,7 +56,7 @@ def get_playlist_id(some_str):
 
 
 def send_message(req: SlackRequest, message: str):
-  slack_team = DAO.get_slack_team(SlackTeam(req.team_id))
+  slack_team = DAO.get_item(SlackTeam(req.team_id))
   slack_client = WebClient(CIPHER_SUITE.decrypt(slack_team.slack_oauth_token_encrypt))
   slack_client.chat_postMessage(channel=req.channel_id,
                                 text=message)
@@ -74,7 +80,7 @@ def handler(event, context):
     if req.type is SlackEventType.APP_MENTION:
       playlist_id = get_playlist_id(req.text)
       if playlist_id is not None:
-        DAO.insert_slack_channel(SlackChannel(req.team_id, req.channel_id, playlist_id))
+        DAO.put_item(SlackChannel(req.team_id, req.channel_id, playlist_id))
         send_message(req, f"Set playlist {playlist_id} as the default for this channel")
       else:
         send_message(req, "Sorry, I don't know what to do with that. I can only set default playlists for now")
@@ -95,14 +101,14 @@ def handler(event, context):
       send_message(req, "No worries, I won't add this one.")
       return SUCCESS
 
-    slack_channel = DAO.get_slack_channel(SlackChannel(req.team_id, req.channel_id))
+    slack_channel = DAO.get_item(SlackChannel(req.team_id, req.channel_id))
     if slack_channel is None:
       send_message(req, 'Cannot add track because playlist is not yet set.')
       return SUCCESS
 
     # TODO replace the get/insert pattern with a single insert to save money
     spotify_track = SpotifyTrack(track_id, slack_channel.spotify_playlist_id, req.team_id, req.user_id)
-    existing_track = DAO.get_spotify_track(spotify_track)
+    existing_track = DAO.get_item(spotify_track)
     if existing_track:
       if spotify_track.slack_user_id is not None:
         dupe_message = f"{random.choice(failure_messages)} This was added on {spotify_track.get_date()} - credit to <@{existing_track.slack_user_id}>."
@@ -111,14 +117,15 @@ def handler(event, context):
       send_message(req, dupe_message)
       return SUCCESS
 
-    DAO.insert_spotify_track(spotify_track)
-    slack_user = DAO.get_slack_user(SlackUser(req.team_id, req.user_id))
+    DAO.put_item(spotify_track)
+    slack_user = DAO.get_item(SlackUser(req.team_id, req.user_id))
+    slack_user = slack_user if slack_user is not None else DEFAULT_SLACK_USER
     spotify_api = SpotifyApi(slack_user, CIPHER_SUITE)
     spotify_api.add_track(slack_channel.spotify_playlist_id, spotify_track)
     send_message(req, f"{random.choice(success_messages)}")
   except Exception as e:
-    DAO.blind_write("audit", "event", event)
-    DAO.blind_write("audit", "data", event_body)
+    DAO.put_dictionary("audit", "event", event)
+    DAO.put_dictionary("audit", "data", event_body)
     print(traceback.format_exc())
   finally:
     return SUCCESS

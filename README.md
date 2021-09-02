@@ -11,7 +11,7 @@ npm install --save serverless-python-requirements
 ## Test
 
 ```bash
-pytest -c config_test.ini
+pytest -c tests/config_test.ini
 ```
 
 
