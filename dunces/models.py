@@ -13,14 +13,14 @@ class DynamoClass:
   data_type: str = field(init=False)
 
 
-@dataclass(order=True)
+@dataclass
 class SlackUserRecommendation:
   slack_user_id: str
   recommendation_note: str = None
   create_time: str = datetime.now(timezone.utc).isoformat()
 
 
-@dataclass(order=True)
+@dataclass
 class Recommendation(DynamoClass):
   slack_team_id: str
   title: str
