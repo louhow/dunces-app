@@ -2,20 +2,27 @@ from unittest import TestCase
 from dataclasses import asdict
 import pytest
 
-from dunces.helpers.dao import Dao
+from dunces.helpers.dao import Dao, DuplicateItemException
 from dunces.models import SpotifyTrack, Recommendation, SlackUserRecommendation
 
 
 class TestDao(TestCase):
   dao = Dao("dunces-app-local", endpoint_url="http://localhost:4566")
-  # test_case = TestCase()
-  # test_case.maxDiff = 1000
 
   @pytest.fixture(autouse=True)
   def run_around_tests(self):
     self._truncate_data()
     yield
     assert True
+
+  def test_insert_same_item_twice_fails(self):
+    track_to_insert = SpotifyTrack("track_id", "playlist_id", "slack_team_id")
+    self.dao.insert_item(track_to_insert)
+    try:
+      self.dao.insert_item(track_to_insert)
+      assert True is False
+    except DuplicateItemException as e:
+      TestCase().assertDictEqual(asdict(e.get_existing_item()), asdict(track_to_insert))
 
   def test_put_item(self):
     track_to_insert = SpotifyTrack("track_id", "playlist_id", "slack_team_id")
