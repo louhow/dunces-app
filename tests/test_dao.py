@@ -30,11 +30,11 @@ class TestDao(TestCase):
     track = self.dao.put_item(SpotifyTrack("track_id", "playlist_id", "slack_team_id"))
     assert self.dao.get_item(track) is not None
 
-  def test_get_nested_dataclass_items(self):
+  def test_get_dataclass_items(self):
     recommendation = Recommendation(
       "slack_team_id",
       "title",
-      [SlackUserRecommendation("slack_user_id", "some note")]
+      1,
     )
     self.dao.put_item(recommendation)
     actual = self.dao.get_items(recommendation.PK, Recommendation)

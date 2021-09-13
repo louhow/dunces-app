@@ -3,7 +3,7 @@ import os
 from slack_sdk import WebClient
 
 from dunces.models import SlackTeam
-from dunces.handlers.slack_event import DAO, CIPHER_SUITE
+from dunces.common import DAO, CIPHER_SUITE
 
 oauth_scope = ", ".join(["app_mentions:read", "channels:history", "chat:write", "groups:history", "links:read", "im:history", "mpim:history"])
 client_id = os.environ["SLACK_CLIENT_ID"]

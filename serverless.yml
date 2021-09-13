@@ -31,11 +31,18 @@ provider:
       Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
 
 functions:
-  slack:
+  slack_event:
     handler: dunces/handlers/slack_event.handler
     events:
       - http:
           path: slack/handler
+          method: post
+          cors: true
+  slack_command_recommend:
+    handler: dunces/handlers/slack_command_recommend.handler
+    events:
+      - http:
+          path: slack/recommend_handler
           method: post
           cors: true
   slack_oauth_pre:
@@ -73,6 +80,13 @@ resources:
           -
             AttributeName: SK
             KeyType: RANGE
+#        GlobalSecondaryIndexes:
+#          - IndexName: GS1
+#            KeySchema:
+#              - AttributeName: GS1PK
+#                KeyType: HASH
+#              - AttributeName: GS1SK
+#                KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 10
           WriteCapacityUnits: 10

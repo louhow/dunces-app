@@ -15,7 +15,9 @@ class DynamoClass:
 
 @dataclass
 class SlackUserRecommendation:
+  slack_team_id: str
   slack_user_id: str
+  recommendation: str
   recommendation_note: str = None
   create_time: str = datetime.now(timezone.utc).isoformat()
 
@@ -23,16 +25,13 @@ class SlackUserRecommendation:
 @dataclass
 class Recommendation(DynamoClass):
   slack_team_id: str
-  title: str
-  slack_user_recommendations: List[SlackUserRecommendation]
-  count_recommends: int = field(init=False)
+  recommendation: str
+  count_recommendations: int
   create_time: str = datetime.now(timezone.utc).isoformat()
 
   def __post_init__(self):
-    self.title = self.title.upper()
-    self.count_recommends = len(self.slack_user_recommendations)
     self.PK = f'TEAM#{self.slack_team_id}'
-    self.SK = f'RECOMMENDATION#{self.title}'
+    self.SK = f'RECOMMENDATION#{self.recommendation.upper()}'
     self.data_type = 'Recommendation'
 
 
@@ -100,14 +99,39 @@ class SlackTeam(DynamoClass):
 class SlackEventType(Enum):
   MESSAGE = 'message'
   APP_MENTION = 'app_mention'
+  COMMAND = 'command'
 
 
+@dataclass
 class SlackRequest:
-  def __init__(self, request):
-    event = request.get('event', {})
-    self.team_id: str = request.get('team_id', event.get('team'))
-    self.channel_id: str = event.get('channel')
-    self.user_id: str = event.get('user')
-    self.type: SlackEventType = SlackEventType[event.get('type', '').upper()]
-    self.is_bot_message: bool = event.get('bot_id', None) is not None
-    self.text = event.get('text')
+  team_id: str
+  channel_id: str
+  user_id: str
+  type: str
+  text: str
+  is_bot_message: bool = False
+
+  @classmethod
+  def from_event_request(cls, event_request):
+    event = event_request.get('event', {})
+    return cls(
+      event_request.get('team_id', event.get('team')),
+      event.get('channel'),
+      event.get('user'),
+      event.get('type', '').upper(),
+      event.get('text'),
+      event.get('bot_id', None) is not None,
+    )
+
+  @classmethod
+  def from_command_request(cls, params):
+    return cls(
+      params.get('team_id')[0],
+      next(iter(params.get('channel_id', [])), None),
+      params.get('user_id')[0],
+      SlackEventType.COMMAND.value,
+      params.get('text')[0]
+    )
+
+  def get_type(self) -> SlackEventType:
+    return SlackEventType[self.type]

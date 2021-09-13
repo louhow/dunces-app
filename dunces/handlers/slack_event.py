@@ -5,14 +5,12 @@ from slack_sdk import WebClient
 import traceback
 import random
 
-from dunces.helpers.dao import Dao
+from dunces.common import CIPHER_SUITE, DAO, SUCCESS
+from dunces.helpers.dao import DuplicateItemException
 from dunces.models import SpotifyTrack, SlackUser, SlackChannel, SlackRequest, SlackEventType, \
   SlackTeam
-from dunces.helpers.secure import CipherSuite
 from dunces.helpers.spotify_api import SpotifyApi
 
-DAO = Dao(os.environ['DYNAMODB_TABLE'])
-CIPHER_SUITE = CipherSuite(os.environ['APP_KEY'])
 DEFAULT_SLACK_USER = SlackUser(
   'dont',
   'care',
@@ -36,13 +34,6 @@ failure_messages = [
   "Looks like someone has good taste.",
   "This track has already been added."
 ]
-
-SUCCESS = {
-  "statusCode": 200,
-  "headers": {
-    'Content-Type': 'text/html',
-  }
-}
 
 
 def get_track_id(some_str):
@@ -75,9 +66,9 @@ def handler(event, context):
     }
 
   try:
-    req = SlackRequest(event_body)
+    req = SlackRequest.from_event_request(event_body)
 
-    if req.type is SlackEventType.APP_MENTION:
+    if req.get_type() is SlackEventType.APP_MENTION:
       playlist_id = get_playlist_id(req.text)
       if playlist_id is not None:
         DAO.put_item(SlackChannel(req.team_id, req.channel_id, playlist_id))
@@ -87,7 +78,7 @@ def handler(event, context):
 
       return SUCCESS
 
-    if req.type is not SlackEventType.MESSAGE:
+    if req.get_type() is not SlackEventType.MESSAGE:
       return SUCCESS
 
     if req.text is None or req.is_bot_message:
@@ -106,21 +97,14 @@ def handler(event, context):
       send_message(req, 'Cannot add track because playlist is not yet set.')
       return SUCCESS
 
-    # TODO replace the get/insert pattern with a single insert to save money
     spotify_track = SpotifyTrack(track_id, slack_channel.spotify_playlist_id, req.team_id, req.user_id)
-    existing_track = DAO.get_item(spotify_track)
-    if existing_track:
-      if spotify_track.slack_user_id is not None:
-        dupe_message = f"{random.choice(failure_messages)} This was added on {spotify_track.get_date()} - credit to <@{existing_track.slack_user_id}>."
-      else:
-        dupe_message = f"{random.choice(failure_messages)} This was added sometime before {spotify_track.get_date()}."
-      send_message(req, dupe_message)
+    try:
+      DAO.insert_item(spotify_track)
+    except DuplicateItemException as e:
+      send_duplicate_track_msg(e.get_existing_item(), req)
       return SUCCESS
 
-    DAO.put_item(spotify_track)
-    slack_user = DAO.get_item(SlackUser(req.team_id, req.user_id))
-    slack_user = slack_user if slack_user is not None else DEFAULT_SLACK_USER
-    spotify_api = SpotifyApi(slack_user, CIPHER_SUITE)
+    spotify_api = SpotifyApi(DEFAULT_SLACK_USER, CIPHER_SUITE)
     spotify_api.add_track(slack_channel.spotify_playlist_id, spotify_track)
     send_message(req, f"{random.choice(success_messages)}")
   except Exception as e:
@@ -129,3 +113,11 @@ def handler(event, context):
     print(traceback.format_exc())
   finally:
     return SUCCESS
+
+
+def send_duplicate_track_msg(existing_track, req):
+  if existing_track.slack_user_id is not None:
+    dupe_message = f"{random.choice(failure_messages)} This was added on {existing_track.get_date()} - credit to <@{existing_track.slack_user_id}>."
+  else:
+    dupe_message = f"{random.choice(failure_messages)} This was added sometime before {existing_track.get_date()}."
+  send_message(req, dupe_message)
