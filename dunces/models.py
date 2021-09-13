@@ -10,28 +10,42 @@ import pytz
 class DynamoClass:
   PK: str = field(init=False)
   SK: str = field(init=False)
+  GSIPK1: str = field(init=False)
+  GSISK1: str = field(init=False)
   data_type: str = field(init=False)
 
 
 @dataclass
-class SlackUserRecommendation:
+class UserRecommendation(DynamoClass):
   slack_team_id: str
   slack_user_id: str
   recommendation: str
-  recommendation_note: str = None
   create_time: str = datetime.now(timezone.utc).isoformat()
+
+  # TODO decide
+  def __post_init__(self):
+    self.PK = f'TEAM#{self.slack_team_id}#{self.slack_user_id}'
+    self.SK = f'RECOMMENDATION#{self.recommendation.upper()}'
+    self.data_type = 'UserRecommendation'
+    self.GSIPK1 = self.PK
+    self.GSISK1 = self.create_time
 
 
 @dataclass
 class Recommendation(DynamoClass):
   slack_team_id: str
   recommendation: str
-  count_recommendations: int
+  user_recommendations: List[UserRecommendation]
   create_time: str = datetime.now(timezone.utc).isoformat()
+  count_recommendations: int = field(init=False)
 
+  # TODO decide
   def __post_init__(self):
+    self.count_recommendations = len(self.user_recommendations)
     self.PK = f'TEAM#{self.slack_team_id}'
     self.SK = f'RECOMMENDATION#{self.recommendation.upper()}'
+    self.GSIPK1 = self.PK
+    self.GSISK1 = f'{self.count_recommendations:10}'
     self.data_type = 'Recommendation'
 
 
@@ -69,6 +83,8 @@ class SlackUser(DynamoClass):
     self.PK = f'USER#{self.slack_team_id}#{self.slack_user_id}'
     self.SK = f'USER#{self.slack_team_id}#{self.slack_user_id}'
     self.data_type = 'SlackUser'
+    self.GSIPK1 = self.slack_team_id
+    self.GSISK1 = self.create_time
 
 
 @dataclass
@@ -83,6 +99,8 @@ class SlackChannel(DynamoClass):
     self.PK = f'CHANNEL#{self.slack_team_id}#{self.slack_channel_id}'
     self.SK = f'CHANNEL#{self.slack_team_id}#{self.slack_channel_id}'
     self.data_type = 'SlackChannel'
+    self.GSIPK1 = self.PK
+    self.GSISK1 = self.create_time
 
 
 @dataclass
@@ -94,6 +112,8 @@ class SlackTeam(DynamoClass):
     self.PK = f'TEAM#{self.slack_team_id}'
     self.SK = f'TEAM#{self.slack_team_id}'
     self.data_type = 'SlackTeam'
+    self.GSIPK1 = self.PK
+    self.GSISK1 = self.SK
 
 
 class SlackEventType(Enum):
