@@ -41,7 +41,7 @@ def handler(event, context):
                           f'/recommend "Some Movie"\n'
                           f'@couch-bot assemble "Some Movie"')
 
-  rec_search = get_single_match("view \"(.*)\"", req.text)
+  rec_search = get_single_match('view ["|“|”](.*)["|“|”]', req.text)
 
   if rec_search:
     rec = RECOMMENDATION_SERVICE.get_recommendation(req.team_id, rec_search)
@@ -56,7 +56,7 @@ def handler(event, context):
     msg = '\n'.join([str(x) for x in recs[:10]])
     return return_message(f'{msg}')
 
-  new_rec = get_single_match("\"(.*)\"", req.text)
+  new_rec = get_single_match('["|“|”](.*)["|“|”]', req.text)
 
   if new_rec:
     user_rec = UserRecommendation(req.team_id, req.user_id, new_rec)

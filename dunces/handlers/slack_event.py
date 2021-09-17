@@ -8,7 +8,7 @@ import random
 from dunces.common import CIPHER_SUITE, DAO, SUCCESS, RECOMMENDATION_SERVICE, get_single_match
 from dunces.helpers.dao import DuplicateItemException
 from dunces.models import SpotifyTrack, SlackUser, SlackChannel, SlackRequest, SlackEventType, \
-  SlackTeam
+  SlackTeam, UserRecommendation
 from dunces.helpers.spotify_api import SpotifyApi
 
 DEFAULT_SLACK_USER = SlackUser(
@@ -68,10 +68,22 @@ def handler(event, context):
     req = SlackRequest.from_event_request(event_body)
 
     if req.get_type() is SlackEventType.APP_MENTION:
-      recommendation_str = get_single_match(r'.*assemble \"(.*)\"', req.text)
+      recommendation_str = get_single_match(r'.*assemble ["|“|”](.*)["|“|”]', req.text)
       if recommendation_str:
         rec = RECOMMENDATION_SERVICE.get_recommendation(req.team_id, recommendation_str)
         send_message(req, str(rec))
+        return SUCCESS
+
+      new_rec = get_single_match(r'.*recommend ["|“|”](.*)["|“|”]', req.text)
+
+      if new_rec:
+        user_rec = UserRecommendation(req.team_id, req.user_id, new_rec)
+        try:
+          rec = RECOMMENDATION_SERVICE.insert_user_recommendation(user_rec)
+          send_message(req, f'Recommended: {str(rec)}')
+        except DuplicateItemException as e:
+          send_message(req, f'You already recommended this: {e.get_existing_item()}')
+
         return SUCCESS
 
       playlist_id = get_playlist_id(req.text)
@@ -79,7 +91,7 @@ def handler(event, context):
         DAO.put_item(SlackChannel(req.team_id, req.channel_id, playlist_id))
         send_message(req, f"Set playlist {playlist_id} as the default for this channel")
       else:
-        send_message(req, "Sorry, I don't know what to do with that. I can only set default playlists for now")
+        send_message(req, "Sorry, I don't know what to do with that.")
 
       return SUCCESS
 

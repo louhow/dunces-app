@@ -24,6 +24,8 @@ class RecommendationService:
       return new_recommendation
     else:
       recommendation.user_recommendations.append(user_recommendation)
+      recommendation.count_recommendations += 1
+      recommendation.last_recommended_time = user_recommendation.create_time
       self.dao.put_item(recommendation)
       return recommendation
 
