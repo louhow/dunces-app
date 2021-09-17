@@ -38,8 +38,8 @@ def handler(event, context):
   if req.text == "help":
     return return_message(f'/recommend view "Some Movie"\n'
                           f'/recommend view recent\n'
-                          f'/recommend "Some Movie"\n'
-                          f'@couch-bot assemble "Some Movie"')
+                          f'/recommend view popular\n'
+                          f'@couch-bot recommend "Some Movie"')
 
   rec_search = get_single_match('view ["|“|”](.*)["|“|”]', req.text)
 
@@ -55,15 +55,5 @@ def handler(event, context):
       recs.sort(key=lambda x: x.count_recommendations, reverse=True)
     msg = '\n'.join([str(x) for x in recs[:10]])
     return return_message(f'{msg}')
-
-  new_rec = get_single_match('["|“|”](.*)["|“|”]', req.text)
-
-  if new_rec:
-    user_rec = UserRecommendation(req.team_id, req.user_id, new_rec)
-    try:
-      rec = RECOMMENDATION_SERVICE.insert_user_recommendation(user_rec)
-      return return_message(f'inserted:\n {str(rec)}')
-    except DuplicateItemException as e:
-      return return_message(f'You already recommended this: {e.get_existing_item()}')
 
   return return_message(f'Sorry, I did not understand that. /recommend help')
