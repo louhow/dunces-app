@@ -42,7 +42,7 @@ def post_install(event, context):
   slack_team_id = response["team"]["id"]
   token = CIPHER_SUITE.encrypt(response["access_token"])
 
-  DAO.insert_slack_team(SlackTeam(slack_team_id, token))
+  DAO.put_item(SlackTeam(slack_team_id, token))
 
   # Don't forget to let the user know that auth has succeeded!
   return html("Auth complete!")

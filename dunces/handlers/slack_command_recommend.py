@@ -38,7 +38,8 @@ def handler(event, context):
   if req.text == "help":
     return return_message(f'/recommend view "Some Movie"\n'
                           f'/recommend view recent\n'
-                          f'/recommend "Some Movie"')
+                          f'/recommend "Some Movie"\n'
+                          f'@couch-bot assemble "Some Movie"')
 
   rec_search = get_single_match("view \"(.*)\"", req.text)
 
