@@ -24,7 +24,7 @@ class UserRecommendation(DynamoClass):
 
   # TODO decide
   def __post_init__(self):
-    self.PK = f'TEAM#{self.slack_team_id}#{self.slack_user_id}'
+    self.PK = f'USER#{self.slack_team_id}#{self.slack_user_id}'
     self.SK = f'RECOMMENDATION#{self.recommendation.upper()}'
     self.data_type = 'UserRecommendation'
     self.GSIPK1 = self.PK
@@ -61,6 +61,8 @@ class SpotifyTrack(DynamoClass):
   def __post_init__(self):
     self.PK = f'PLAYLIST#{self.slack_team_id}#{self.spotify_playlist_id}'
     self.SK = f'TRACK#{self.spotify_track_id}'
+    self.GSIPK1 = self.slack_team_id
+    self.GSISK1 = f'{self.create_time}'
     self.data_type = 'SpotifyTrack'
     self.slack_team_user_id = f'USER#{self.slack_team_id}#{self.slack_user_id}'
 

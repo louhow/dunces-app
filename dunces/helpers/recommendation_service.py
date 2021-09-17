@@ -31,7 +31,7 @@ class RecommendationService:
     return self.dao.get_item(Recommendation(team_id, recommendation_text, []))
 
   def get_recommendations(self, team_id) -> [Recommendation]:
-    return self.dao.get_items(team_id, Recommendation)
+    return self.dao.get_items(f'TEAM#{team_id}', Recommendation)
 
   def get_user_recommendations(self, team_id: str, user_id: str) -> [UserRecommendation]:
-    return self.dao.get_items(f'{team_id}#{user_id}', UserRecommendation)
+    return self.dao.get_items(f'USER#{team_id}#{user_id}', UserRecommendation)
