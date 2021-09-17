@@ -30,6 +30,9 @@ class UserRecommendation(DynamoClass):
     self.GSIPK1 = self.PK
     self.GSISK1 = self.create_time
 
+  def __repr__(self):
+    return f'{self.recommendation} <@{self.slack_user_id}> {self.create_time}'
+
 
 @dataclass
 class Recommendation(DynamoClass):
@@ -47,6 +50,9 @@ class Recommendation(DynamoClass):
     self.GSIPK1 = self.PK
     self.GSISK1 = f'{self.count_recommendations:10}'
     self.data_type = 'Recommendation'
+
+  def __repr__(self):
+    return f'{self.recommendation} {self.slack_team_id} {self.count_recommendations} {self.user_recommendations}'
 
 
 @dataclass

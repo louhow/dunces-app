@@ -31,6 +31,7 @@ class RecommendationService:
     return self.dao.get_item(Recommendation(team_id, recommendation_text, []))
 
   def get_recommendations(self, team_id) -> [Recommendation]:
+    # TODO SK filter with RECOMMENDATION#
     return self.dao.get_items(f'TEAM#{team_id}', Recommendation)
 
   def get_user_recommendations(self, team_id: str, user_id: str) -> [UserRecommendation]:
