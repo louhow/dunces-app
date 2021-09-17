@@ -6,6 +6,18 @@ from typing import List
 import pytz
 
 
+def get_datetime():
+  return datetime.now(timezone.utc).isoformat()
+
+
+class DateFormatter:
+  @staticmethod
+  def get_date(iso_time):
+    return datetime.fromisoformat(iso_time) \
+      .replace(tzinfo=pytz.utc).astimezone(pytz.timezone('US/Central')) \
+      .strftime('%b %-d, %Y')
+
+
 @dataclass
 class DynamoClass:
   PK: str = field(init=False)
@@ -20,7 +32,7 @@ class UserRecommendation(DynamoClass):
   slack_team_id: str
   slack_user_id: str
   recommendation: str
-  create_time: str = datetime.now(timezone.utc).isoformat()
+  create_time: str = field(default_factory=get_datetime)
 
   # TODO decide
   def __post_init__(self):
@@ -31,7 +43,10 @@ class UserRecommendation(DynamoClass):
     self.GSISK1 = self.create_time
 
   def __repr__(self):
-    return f'{self.recommendation} <@{self.slack_user_id}> {self.create_time}'
+    return f'<@{self.slack_user_id}> ({self.get_create_date()})'
+
+  def get_create_date(self):
+    return DateFormatter.get_date(self.create_time)
 
 
 @dataclass
@@ -39,12 +54,15 @@ class Recommendation(DynamoClass):
   slack_team_id: str
   recommendation: str
   user_recommendations: List[UserRecommendation]
-  create_time: str = datetime.now(timezone.utc).isoformat()
+  create_time: str = field(default_factory=get_datetime)
   count_recommendations: int = field(init=False)
+  last_recommended_time: str = field(init=False)
 
   # TODO decide
   def __post_init__(self):
     self.count_recommendations = len(self.user_recommendations)
+    if self.user_recommendations:
+      self.last_recommended_time = self.user_recommendations[len(self.user_recommendations)-1].create_time
     self.PK = f'TEAM#{self.slack_team_id}'
     self.SK = f'RECOMMENDATION#{self.recommendation.upper()}'
     self.GSIPK1 = self.PK
@@ -52,7 +70,11 @@ class Recommendation(DynamoClass):
     self.data_type = 'Recommendation'
 
   def __repr__(self):
-    return f'{self.recommendation} {self.slack_team_id} {self.count_recommendations} {self.user_recommendations}'
+    user_rec_str = ', '.join([str(x) for x in self.user_recommendations])
+    return f'{self.recommendation} ({self.count_recommendations}): {user_rec_str}'
+
+  def get_create_date(self):
+    return DateFormatter.get_date(self.create_time)
 
 
 @dataclass
@@ -61,7 +83,7 @@ class SpotifyTrack(DynamoClass):
   spotify_playlist_id: str
   slack_team_id: str
   slack_user_id: str = None  # Some old playlist items were added before auditing occurred
-  create_time: str = datetime.now(timezone.utc).isoformat()
+  create_time: str = field(default_factory=get_datetime)
   slack_team_user_id: str = field(init=False)
 
   def __post_init__(self):
@@ -73,9 +95,7 @@ class SpotifyTrack(DynamoClass):
     self.slack_team_user_id = f'USER#{self.slack_team_id}#{self.slack_user_id}'
 
   def get_date(self):
-    return datetime.fromisoformat(self.create_time)\
-      .replace(tzinfo=pytz.utc).astimezone(pytz.timezone('US/Central'))\
-      .strftime('%B %-d, %Y')
+    return DateFormatter.get_date(self.create_time)
 
 
 @dataclass
@@ -84,7 +104,7 @@ class SlackUser(DynamoClass):
   slack_user_id: str
   spotify_user_name_encrypt: str = None
   spotify_refresh_token_encrypt: str = None
-  create_time: str = datetime.now(timezone.utc).isoformat()
+  create_time: str = field(default_factory=get_datetime)
 
   # TODO migrate PK/SK to TEAM#*/USER#*
   def __post_init__(self):
@@ -100,7 +120,7 @@ class SlackChannel(DynamoClass):
   slack_team_id: str
   slack_channel_id: str
   spotify_playlist_id: str = None
-  create_time: str = datetime.now(timezone.utc).isoformat()
+  create_time: str = field(default_factory=get_datetime)
 
   # TODO migrate PK/SK to TEAM#*/CHANNEL#*
   def __post_init__(self):
@@ -115,6 +135,7 @@ class SlackChannel(DynamoClass):
 class SlackTeam(DynamoClass):
   slack_team_id: str
   slack_oauth_token_encrypt: str = None
+  create_time: str = field(default_factory=get_datetime)
 
   def __post_init__(self):
     self.PK = f'TEAM#{self.slack_team_id}'

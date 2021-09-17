@@ -5,7 +5,7 @@ from slack_sdk import WebClient
 import traceback
 import random
 
-from dunces.common import CIPHER_SUITE, DAO, SUCCESS
+from dunces.common import CIPHER_SUITE, DAO, SUCCESS, RECOMMENDATION_SERVICE, get_single_match
 from dunces.helpers.dao import DuplicateItemException
 from dunces.models import SpotifyTrack, SlackUser, SlackChannel, SlackRequest, SlackEventType, \
   SlackTeam
@@ -42,8 +42,7 @@ def get_track_id(some_str):
 
 
 def get_playlist_id(some_str):
-  z = re.match(r'.*https://open.spotify.com/playlist/(\w+).*', some_str)
-  return z.group(1) if z and len(z.groups()) >= 1 else None
+  return get_single_match(r'.*https://open.spotify.com/playlist/(\w+).*', some_str)
 
 
 def send_message(req: SlackRequest, message: str):
@@ -69,6 +68,12 @@ def handler(event, context):
     req = SlackRequest.from_event_request(event_body)
 
     if req.get_type() is SlackEventType.APP_MENTION:
+      recommendation_str = get_single_match(r'.*assemble \"(.*)\"', req.text)
+      if recommendation_str:
+        rec = RECOMMENDATION_SERVICE.get_recommendation(req.team_id, recommendation_str)
+        send_message(req, str(rec))
+        return SUCCESS
+
       playlist_id = get_playlist_id(req.text)
       if playlist_id is not None:
         DAO.put_item(SlackChannel(req.team_id, req.channel_id, playlist_id))

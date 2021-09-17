@@ -1,9 +1,9 @@
 # Escaped: <@U1234|user> <#C1234|general>
 from dataclasses import asdict
-from dunces.common import CIPHER_SUITE, DAO, RECOMMENDATION_SERVICE, get_single_match
+from dunces.common import DAO, RECOMMENDATION_SERVICE, get_single_match
+from dunces.helpers.dao import DuplicateItemException
 from urllib.parse import parse_qs
 import json
-import re
 
 from dunces.models import SlackRequest, UserRecommendation
 
@@ -48,16 +48,21 @@ def handler(event, context):
 
   if req.text.startswith("view recent") or req.text.startswith("view popular"):
     recs = RECOMMENDATION_SERVICE.get_recommendations(req.team_id)
-    return return_message(f'view recent:\n{str(recs)}')
+    if "recent" in req.text:
+      recs.sort(key=lambda x: x.last_recommended_time, reverse=True)
+    else:
+      recs.sort(key=lambda x: x.count_recommendations, reverse=True)
+    msg = '\n'.join([str(x) for x in recs[:10]])
+    return return_message(f'{msg}')
 
   new_rec = get_single_match("\"(.*)\"", req.text)
 
   if new_rec:
     user_rec = UserRecommendation(req.team_id, req.user_id, new_rec)
-    rec = RECOMMENDATION_SERVICE.insert_user_recommendation(user_rec)
-    return return_message(f'inserted:\n {str(rec)}')
+    try:
+      rec = RECOMMENDATION_SERVICE.insert_user_recommendation(user_rec)
+      return return_message(f'inserted:\n {str(rec)}')
+    except DuplicateItemException as e:
+      return return_message(f'You already recommended this: {e.get_existing_item()}')
 
   return return_message(f'Sorry, I did not understand that. /recommend help')
-
-
-

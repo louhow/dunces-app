@@ -62,8 +62,9 @@ class Dao(object):
 
     return from_dict(item.__class__, returned_item, DACITE_CONFIG) if returned_item else None
 
-  def get_items(self, pk, some_class: Type[T]) -> [T]:
-    response = self.table.query(KeyConditionExpression=Key('PK').eq(pk))
+  def get_items(self, pk, sk_starts_with, some_class: Type[T]) -> [T]:
+    condition = Key('PK').eq(pk) & Key('SK').begins_with(sk_starts_with)
+    response = self.table.query(KeyConditionExpression=condition)
     items = response.get('Items', None)
     return list(map(lambda item: from_dict(some_class, item, DACITE_CONFIG), items)) if items else []
 
