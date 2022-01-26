@@ -83,6 +83,7 @@ class SpotifyTrack(DynamoClass):
   spotify_playlist_id: str
   slack_team_id: str
   slack_user_id: str = None  # Some old playlist items were added before auditing occurred
+  slack_timestamp: str = None  # Some old tracks were added before we added this timestamp
   create_time: str = field(default_factory=get_datetime)
   slack_team_user_id: str = field(init=False)
 
@@ -151,6 +152,7 @@ class SlackEventType(Enum):
   COMMAND = 'command'
 
 
+# TODO break out SlackRecommendRequest and SlackEventRequest
 @dataclass
 class SlackRequest:
   team_id: str
@@ -158,28 +160,34 @@ class SlackRequest:
   user_id: str
   type: str
   text: str
-  is_bot_message: bool = False
+  event_timestamp: str = None
+  event_thread_timestamp: str = None
+  event_is_bot_message: bool = False
+  command_trigger_id: str = None
 
   @classmethod
   def from_event_request(cls, event_request):
     event = event_request.get('event', {})
     return cls(
-      event_request.get('team_id', event.get('team')),
-      event.get('channel'),
-      event.get('user'),
-      event.get('type', '').upper(),
-      event.get('text'),
-      event.get('bot_id', None) is not None,
+      team_id=event_request.get('team_id', event.get('team')),
+      channel_id=event.get('channel'),
+      user_id=event.get('user'),
+      type=event.get('type', '').upper(),
+      text=event.get('text'),
+      event_timestamp=event.get('ts'),
+      event_thread_timestamp=event.get('thread_ts', None),
+      event_is_bot_message=event.get('bot_id', None) is not None,
     )
 
   @classmethod
   def from_command_request(cls, params):
     return cls(
-      params.get('team_id')[0],
-      next(iter(params.get('channel_id', [])), None),
-      params.get('user_id')[0],
-      SlackEventType.COMMAND.value,
-      params.get('text')[0]
+      team_id=params.get('team_id')[0],
+      channel_id=next(iter(params.get('channel_id', [])), None),
+      user_id=params.get('user_id')[0],
+      type=SlackEventType.COMMAND.value,
+      text=params.get('text')[0],
+      command_trigger_id=params.get('trigger_id')[0]
     )
 
   def get_type(self) -> SlackEventType:

@@ -11,7 +11,8 @@ npm install --save serverless-python-requirements
 ## Test
 
 ```bash
-pytest -c tests/config_test.ini
+docker-compose up -d
+pytest -c tests/config_test.ini # This is currently broken due (pytest isn't too clever about recognizing app and test paths)
 ```
 
 

@@ -1,11 +1,10 @@
 # Escaped: <@U1234|user> <#C1234|general>
 from dataclasses import asdict
 from dunces.common import DAO, RECOMMENDATION_SERVICE, get_single_match
-from dunces.helpers.dao import DuplicateItemException
 from urllib.parse import parse_qs
 import json
 
-from dunces.models import SlackRequest, UserRecommendation
+from dunces.models import SlackRequest
 
 
 def return_message(text):
@@ -56,4 +55,4 @@ def handler(event, context):
     msg = '\n'.join([str(x) for x in recs[:10]])
     return return_message(f'{msg}')
 
-  return return_message(f'Sorry, I did not understand that. /recommend help')
+  return return_message(f'Sorry, I did not understand that. Try /recommend help')

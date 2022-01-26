@@ -49,7 +49,8 @@ def send_message(req: SlackRequest, message: str):
   slack_team = DAO.get_item(SlackTeam(req.team_id))
   slack_client = WebClient(CIPHER_SUITE.decrypt(slack_team.slack_oauth_token_encrypt))
   slack_client.chat_postMessage(channel=req.channel_id,
-                                text=message)
+                                text=message,
+                                thread_ts=req.event_thread_timestamp)
 
 
 def handler(event, context):
@@ -63,6 +64,9 @@ def handler(event, context):
         'Content-Type': 'text/html',
       }
     }
+
+  # DAO.put_dictionary("audit", "event", event)
+  # DAO.put_dictionary("audit", "event_body", event_body)
 
   try:
     req = SlackRequest.from_event_request(event_body)
@@ -98,7 +102,7 @@ def handler(event, context):
     if req.get_type() is not SlackEventType.MESSAGE:
       return SUCCESS
 
-    if req.text is None or req.is_bot_message:
+    if req.text is None or req.event_is_bot_message:
       return SUCCESS
 
     track_id = get_track_id(req.text)
@@ -111,22 +115,24 @@ def handler(event, context):
 
     slack_channel = DAO.get_item(SlackChannel(req.team_id, req.channel_id))
     if slack_channel is None:
-      send_message(req, 'Cannot add track because playlist is not yet set.')
+      send_message(req, 'Cannot add track because playlist is not yet set. @ me with the Spotify playlist URL.')
       return SUCCESS
 
-    spotify_track = SpotifyTrack(track_id, slack_channel.spotify_playlist_id, req.team_id, req.user_id)
+    spotify_track = SpotifyTrack(track_id, slack_channel.spotify_playlist_id,
+                                 req.team_id, req.user_id, req.event_timestamp)
     try:
       DAO.insert_item(spotify_track)
     except DuplicateItemException as e:
-      send_duplicate_track_msg(e.get_existing_item(), req)
+      if req.event_timestamp != e.get_existing_item().slack_timestamp:
+        send_duplicate_track_msg(e.get_existing_item(), req)
       return SUCCESS
 
     spotify_api = SpotifyApi(DEFAULT_SLACK_USER, CIPHER_SUITE)
     spotify_api.add_track(slack_channel.spotify_playlist_id, spotify_track)
     send_message(req, f"{random.choice(success_messages)}")
   except Exception as e:
-    DAO.put_dictionary("audit", "event", event)
-    DAO.put_dictionary("audit", "data", event_body)
+    DAO.put_dictionary("audit", "error_event", event)
+    DAO.put_dictionary("audit", "error_event_body", event_body)
     print(traceback.format_exc())
   finally:
     return SUCCESS
