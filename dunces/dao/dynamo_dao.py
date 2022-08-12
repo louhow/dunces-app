@@ -5,7 +5,7 @@ from dacite import from_dict, Config as DaciteConfig
 from boto3.dynamodb.conditions import Key
 import boto3
 
-from dunces.models import DynamoClass
+from dunces.models.dynamo import DynamoClass
 
 T = TypeVar('T', bound=DynamoClass)
 DACITE_CONFIG = DaciteConfig(check_types=False, type_hooks={List: List})
@@ -19,7 +19,7 @@ class DuplicateItemException(Exception):
     return self.existing_item
 
 
-class Dao(object):
+class DynamoDao(object):
   def __init__(self, table_name, public_key=None, private_key=None, endpoint_url=None):
     if endpoint_url is not None:
       self.resource = boto3.resource('dynamodb', endpoint_url=endpoint_url)

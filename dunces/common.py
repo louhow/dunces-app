@@ -1,6 +1,6 @@
-from dunces.helpers.dao import Dao
-from dunces.helpers.recommendation_service import RecommendationService
-from dunces.helpers.secure import CipherSuite
+from dunces.dao.dynamo_dao import DynamoDao
+from dunces.services.recommendation_service import RecommendationService
+from dunces.services.secure import CipherSuite
 
 import os
 import re
@@ -12,7 +12,7 @@ SUCCESS = {
   }
 }
 
-DAO = Dao(os.environ['DYNAMODB_TABLE'])
+DAO = DynamoDao(os.environ['DYNAMODB_TABLE'])
 CIPHER_SUITE = CipherSuite(os.environ['APP_KEY'])
 RECOMMENDATION_SERVICE = RecommendationService(DAO)
 

@@ -1,10 +1,13 @@
-from dunces.helpers.dao import Dao
-from dunces.models import Recommendation, UserRecommendation
+from dunces.dao.dynamo_dao import DynamoDao
+from dunces.models.recommendation import UserRecommendation, Recommendation
 
 
 class RecommendationService:
-  def __init__(self, dao: Dao):
+  def __init__(self, dao: DynamoDao):
     self.dao = dao
+    
+  def is_recommendation(self, text):
+    return True
 
   def insert_user_recommendation(self, user_recommendation: UserRecommendation) -> Recommendation:
     """

@@ -1,7 +1,7 @@
 from settings import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
-from dunces.helpers.dao import Dao
+from dunces.dao.dynamo_dao import DynamoDao
 
-dao = Dao('the-app-dev', AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+dao = DynamoDao('the-app-dev', AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
 tracks = []
 
 for idx, track in enumerate(tracks):

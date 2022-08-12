@@ -1,12 +1,12 @@
 from unittest import TestCase
 import pytest
 
-from dunces.helpers.dao import Dao
-from dunces.helpers.recommendation_service import RecommendationService
+from dunces.dao.dynamo_dao import DynamoDao
+from dunces.services.recommendation_service import RecommendationService
 
 
 class TestBaseDao(TestCase):
-  dao = Dao("dunces-app-local", endpoint_url="http://localhost:4566")
+  dao = DynamoDao("dunces-app-local", endpoint_url="http://localhost:4566")
   recommendation_service = RecommendationService(dao)
 
   @pytest.fixture(autouse=True)

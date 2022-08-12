@@ -4,7 +4,7 @@ from dunces.common import DAO, RECOMMENDATION_SERVICE, get_single_match
 from urllib.parse import parse_qs
 import json
 
-from dunces.models import SlackRequest
+from dunces.models.slack import SlackRequest
 
 
 def return_message(text):

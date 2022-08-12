@@ -5,3 +5,4 @@ node_modules/
 .idea/
 settings.py
 out
+dunces.egg-info
