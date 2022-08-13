@@ -5,6 +5,8 @@ from dunces.services.secure import CipherSuite
 import os
 import re
 
+from dunces.services.spotify_service import SpotifyService
+
 SUCCESS = {
   "statusCode": 200,
   "headers": {
@@ -15,6 +17,7 @@ SUCCESS = {
 DAO = DynamoDao(os.environ['DYNAMODB_TABLE'])
 CIPHER_SUITE = CipherSuite(os.environ['APP_KEY'])
 RECOMMENDATION_SERVICE = RecommendationService(DAO)
+SPOTIFY_SERVICE = SpotifyService(DAO, CIPHER_SUITE)
 
 
 def get_single_match(some_pattern, some_str):

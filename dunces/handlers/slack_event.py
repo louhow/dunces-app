@@ -5,12 +5,12 @@ from slack_sdk import WebClient
 import traceback
 import random
 
-from dunces.common import CIPHER_SUITE, DAO, SUCCESS, RECOMMENDATION_SERVICE, get_single_match
+from dunces.common import CIPHER_SUITE, DAO, SUCCESS, RECOMMENDATION_SERVICE, get_single_match, \
+  SPOTIFY_SERVICE
 from dunces.dao.dynamo_dao import DuplicateItemException
 from dunces.models.recommendation import UserRecommendation
 from dunces.models.slack import SlackUser, SlackRequest, SlackTeam, SlackEventType, SlackChannel
-from dunces.models.spotify import SpotifyTrack
-from dunces.services.clients.spotify_api import SpotifyApi
+from dunces.services.spotify_service import SlackChannelMissingPlaylistException
 
 DEFAULT_SLACK_USER = SlackUser(
   'dont',
@@ -72,10 +72,7 @@ def handler(event, context):
         'Content-Type': 'text/html',
       }
     }
-
-  # DAO.put_dictionary("audit", "event", event)
-  # DAO.put_dictionary("audit", "event_body", event_body)
-
+  
   try:
     req = SlackRequest.from_event_request(event_body)
     
@@ -92,35 +89,25 @@ def handler(event, context):
           return send_final_message(req, f'You already recommended this: {e.get_existing_item()}')
       
       if playlist_id := get_playlist_id(req):
-        DAO.put_item(SlackChannel(req.team_id, req.channel_id, playlist_id))
+        slack_channel = SlackChannel(req.team_id, req.channel_id, playlist_id)
+        # TODO move this to a service call
+        DAO.put_item(slack_channel)
         return send_final_message(req, f"Set playlist {playlist_id} as the default for this channel")
 
       return send_final_message(req, "Sorry, I don't know what to do with that.")
 
     if req.text is not None and req.get_type() is SlackEventType.MESSAGE and req.text and not req.event_is_bot_message:
       if track_id := get_track_id(req.text):
-        slack_channel = DAO.get_item(SlackChannel(req.team_id, req.channel_id))
-        if slack_channel is None:
-          return send_final_message(req, 'Cannot add track because playlist is not yet set. @ me with the Spotify playlist URL.')
-    
-        spotify_track = SpotifyTrack(track_id,
-                                     slack_channel.spotify_playlist_id,
-                                     req.team_id,
-                                     req.user_id,
-                                     req.event_timestamp)
         try:
-          DAO.insert_item(spotify_track)
+          spotify_track = SPOTIFY_SERVICE.insert_spotify_track(req, track_id)
+          if spotify_track:
+            return send_final_message(req, f"{random.choice(success_messages)}")
+          else:
+            return SUCCESS
         except DuplicateItemException as e:
-          # Lambda cold boots may result in slack sending the same event multiple times, so
-          # only send a message if this isn't a dupe
-          if req.event_timestamp != e.get_existing_item().slack_timestamp:
-            return send_duplicate_track_msg(e.get_existing_item(), req)
-          return SUCCESS
-    
-        spotify_api = SpotifyApi(DEFAULT_SLACK_USER, CIPHER_SUITE)
-        spotify_api.add_track(slack_channel.spotify_playlist_id, spotify_track)
-        return send_final_message(req, f"{random.choice(success_messages)}")
-    
+          return send_duplicate_track_msg(e.get_existing_item(), req)
+        except SlackChannelMissingPlaylistException as e:
+          return send_final_message(req, 'Cannot add track because playlist is not yet set. @ me with the Spotify playlist URL.')
     return SUCCESS
   except Exception as e:
     DAO.put_dictionary("audit", "error_event", event)

@@ -9,7 +9,7 @@ from dunces.models.slack import SlackUser
 from dunces.models.spotify import SpotifyTrack
 
 
-class SpotifyApi(object):
+class SpotifyClient(object):
     def __init__(self,
                  slack_user: SlackUser,
                  cipher_suite: CipherSuite,
@@ -24,9 +24,8 @@ class SpotifyApi(object):
         self.spotify = spotipy.Spotify(auth_manager=auth_manager)
 
     def add_track(self, playlist_id, track: SpotifyTrack):
-        self.spotify.user_playlist_add_tracks(self.user_name,
-                                              playlist_id,
-                                              [track.spotify_track_id])
+        self.spotify.playlist_add_items(playlist_id,
+                                        [track.spotify_track_id])
 
     def fetch_track_ids(self, playlist_id):
         tracks = []
