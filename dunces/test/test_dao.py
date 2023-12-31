@@ -3,7 +3,7 @@ from dataclasses import asdict
 
 from dunces.helpers.dao import DuplicateItemException
 from dunces.models import SpotifyTrack, Recommendation, UserRecommendation
-from base_dao import TestBaseDao
+from dunces.test.base_dao import TestBaseDao
 
 
 class TestDao(TestBaseDao):

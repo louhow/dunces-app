@@ -3,7 +3,8 @@
 ## Setup
 
 ```bash
-mkvirtualenv --python `which python3` dunces-app
+pyenv virtualenv 3.11 dunces-app-3.11
+source activate dunces-app-3.11 
 pip install -r requirements.txt
 npm install -g serverless
 npm install --save serverless-python-requirements
@@ -12,7 +13,11 @@ npm install --save serverless-python-requirements
 
 ```bash
 docker-compose up -d
-pytest -c tests/config_test.ini # This is currently broken due (pytest isn't too clever about recognizing app and test paths)
+pip install -e . # I think this is run once (from pytest best practices doc - https://docs.pytest.org/en/7.1.x/explanation/goodpractices.html)
+pytest --pyargs dunces 
+
+# at one point I used  this flag - but it was broken and current tests do not require env vars
+# pytest -c tests/config_test.ini
 ```
 
 

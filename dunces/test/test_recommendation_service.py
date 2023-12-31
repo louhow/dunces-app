@@ -1,7 +1,7 @@
 from dataclasses import asdict
 from unittest import TestCase
 
-from base_dao import TestBaseDao
+from dunces.test.base_dao import TestBaseDao
 from dunces.helpers.dao import DuplicateItemException
 from dunces.models import UserRecommendation
 
