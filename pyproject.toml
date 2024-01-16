@@ -5,6 +5,10 @@ build-backend = "hatchling.build"
 [project]
 name = "dunces"
 version = "1.0.0"
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
 
 [tool.pytest.ini_options]
 addopts = [

@@ -1,34 +1,37 @@
 service: the-app
 
-frameworkVersion: ">=1.1.0 <=2.20.1"
+frameworkVersion: "3"
 
 provider:
   name: aws
+  #deploymentMethod: direct
   runtime: python3.8
   profile: dunce
   environment:
-    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
-    APP_KEY: ${ssm:/Config/Prod/Dunces/Key~true}
-    APP_STATE: ${ssm:/Config/Prod/Dunces/AppState~true}
-    SLACK_BOT_TOKEN: ${ssm:/Config/Prod/Slack/BotToken~true}
-    SLACK_CLIENT_ID: ${ssm:/Config/Prod/Slack/ClientId~true}
-    SLACK_CLIENT_SECRET: ${ssm:/Config/Prod/Slack/ClientSecret~true}
-    SLACK_SIGNING_SECRET: ${ssm:/Config/Prod/Slack/SigningSecret~true}
-    SPOTIFY_CLIENT_ID: ${ssm:/Config/Prod/SpotifyClientId~true}
-    SPOTIFY_CLIENT_SECRET: ${ssm:/Config/Prod/SpotifyClientSecret~true}
-    DEFAULT_SPOTIFY_USER_NAME_ENCRYPT: ${ssm:/Config/Prod/SpotifyDefaultUser~true}
-    DEFAULT_SPOTIFY_USER_REFRESH_TOKEN_ENCRYPT: ${ssm:/Config/Prod/SpotifyDefaultRefreshToken~true}
-    STAGE: ${opt:stage, self:provider.stage}
-  iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
-      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+    DYNAMODB_TABLE: ${self:service}-${sls:stage}
+    APP_KEY: ${ssm:/Config/Prod/Dunces/Key}
+    APP_STATE: ${ssm:/Config/Prod/Dunces/AppState}
+    SLACK_BOT_TOKEN: ${ssm:/Config/Prod/Slack/BotToken}
+    SLACK_CLIENT_ID: ${ssm:/Config/Prod/Slack/ClientId}
+    SLACK_CLIENT_SECRET: ${ssm:/Config/Prod/Slack/ClientSecret}
+    SLACK_SIGNING_SECRET: ${ssm:/Config/Prod/Slack/SigningSecret}
+    SPOTIFY_CLIENT_ID: ${ssm:/Config/Prod/SpotifyClientId}
+    SPOTIFY_CLIENT_SECRET: ${ssm:/Config/Prod/SpotifyClientSecret}
+    DEFAULT_SPOTIFY_USER_NAME_ENCRYPT: ${ssm:/Config/Prod/SpotifyDefaultUser}
+    DEFAULT_SPOTIFY_USER_REFRESH_TOKEN_ENCRYPT: ${ssm:/Config/Prod/SpotifyDefaultRefreshToken}
+    STAGE: ${sls:stage}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource: "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
 
 functions:
   slack_event:
@@ -92,10 +95,6 @@ resources:
           WriteCapacityUnits: 10
         TableName: ${self:provider.environment.DYNAMODB_TABLE}
 
-plugins:
-  - serverless-python-requirements
-#  - serverless-localstack
-
 custom:
 #  localstack:
 #    stages:
@@ -111,3 +110,6 @@ custom:
 #      sudo: False
   pythonRequirements:
     dockerizePip: true
+
+plugins:
+  - serverless-python-requirements
