@@ -93,7 +93,7 @@ def handler(event, context):
       playlist_id = get_playlist_id(req.text)
       if playlist_id is not None:
         DAO.put_item(SlackChannel(req.team_id, req.channel_id, playlist_id))
-        send_message(req, f"Set playlist {playlist_id} as the default for this channel")
+        send_message(req, f"Set playlist {playlist_id} as the default for this channel. @me with a Spotify playlist to change it again.")
       else:
         send_message(req, "Sorry, I don't know what to do with that.")
 

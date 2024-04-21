@@ -1,5 +1,7 @@
 # Dunces App
 
+A slack app that allows you to automatically add shared spotify songs to a channel's playlist.
+
 ## Setup
 
 ```bash
@@ -26,11 +28,13 @@ pytest --pyargs dunces
 In order to deploy the endpoint simply run
 
 ```bash
-serverless deploy
+serverless deploy # this may take 15-20 minutes the first time it's run - https://github.com/serverless/serverless-python-requirements/issues/561
 ```
 
 ```
-Required Scopes
+App URL: https://api.slack.com/apps/A01KVM95JH2
+
+Required Scopes - https://api.slack.com/apps/A4W5DQL7M/update-to-granular-scopes?
 
 app_mentions:read
 View messages that directly mention @sandboxbot in conversations that the app is in

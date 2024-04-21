@@ -21,6 +21,8 @@ class DuplicateItemException(Exception):
 
 class Dao(object):
   def __init__(self, table_name, public_key=None, private_key=None, endpoint_url=None):
+    print('hi')
+    print(table_name)
     if endpoint_url is not None:
       self.resource = boto3.resource('dynamodb', endpoint_url=endpoint_url)
     elif public_key is not None and private_key is not None:

@@ -19,3 +19,19 @@ services:
       - AWS_SECRET_ACCESS_KEY=ignorethis
     depends_on:
       - localstack-dynamodb
+
+  postgres-v16:
+    image: pgvector/pgvector:pg16
+    ports:
+      - "15611:5432"
+    expose:
+      - "15611"
+    volumes:
+      - db-data-volume:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=workinonit
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=donuts
+    shm_size: '1gb'
+volumes:
+  db-data-volume:
